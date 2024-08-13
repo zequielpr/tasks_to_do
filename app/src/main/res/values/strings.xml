@@ -1,6 +1,9 @@
 <resources>
     <string name="app_name">tasks_to_do</string>
 
+    <string name="all">All</string>
+
+
     <string name="tasks_list">Tasks</string>
     <string name="stats">stats</string>
     <string name="task_details">Task details</string>
