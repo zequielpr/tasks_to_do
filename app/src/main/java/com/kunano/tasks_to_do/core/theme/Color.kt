@@ -1,4 +1,4 @@
-package com.kunano.tasks_to_do.ui.theme
+package com.kunano.tasks_to_do.core.theme
 
 import androidx.compose.ui.graphics.Color
 
