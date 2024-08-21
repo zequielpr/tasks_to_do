@@ -1,5 +1,6 @@
 package com.kunano.tasks_to_do
 
+import android.app.Application
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -21,6 +22,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.core.view.WindowCompat
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavBackStackEntry
@@ -37,14 +40,18 @@ import com.kunano.tasks_to_do.core.Routes.Routes
 import com.kunano.tasks_to_do.tasks_list.presentation.TaskListViewModel
 import com.kunano.tasks_to_do.tasks_list.presentation.TasksListScreen
 import com.kunano.tasks_to_do.core.theme.Tasks_to_doTheme
+import dagger.hilt.android.AndroidEntryPoint
+import dagger.hilt.android.HiltAndroidApp
 
 val graphsRoutesList = listOf(BottomNavBarRoutes.TasksList, BottomNavBarRoutes.Stats)
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        WindowCompat.setDecorFitsSystemWindows(window, false)
 
         setContent {
             Tasks_to_doTheme {
@@ -80,8 +87,7 @@ fun navHost(
 
         navigation<BottomNavBarRoutes.TasksList>(startDestination = Routes.TasksListScreen) {
             composable<Routes.TasksListScreen> {
-                val viewModel = it.sharedViewModel<TaskListViewModel>(navController)
-                TasksListScreen(viewModel, innerPadding, bottomAppBarScrollBehavior)
+                TasksListScreen(innerPadding, bottomAppBarScrollBehavior)
             }
             composable<Routes.TaskDetails> {
             }
@@ -148,25 +154,17 @@ fun bottomBar(navController: NavController, scrollBehavior: BottomAppBarScrollBe
 }
 
 
-@Composable
-inline fun <reified T : ViewModel> NavBackStackEntry.sharedViewModel(navController: NavController): T {
-    //In cases where there is not a parent destination, it will return a view model instance
-    val navGraphRoute = destination.parent?.route ?: return viewModel()
 
-    //It ensures that the result of the lambda is remembered as long as the NavBackStackEntry is in composition
-    //thereby avoiding unnecessary recompositions
-    val parentEntry = remember(this) {
-        navController.getBackStackEntry(navGraphRoute)
-    }
-
-    //It returns a view model scoped to the parent entry
-    return viewModel(parentEntry)
-}
 
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Preview(showBackground = true)
 @Composable
 fun tasksListPreview() {
-    //TasksListScreen(TaskListViewModel(), PaddingValues(), bottomAppBarScrollBehavior = BottomAppBarScrollBehavior)
+    //TasksListScreen(PaddingValues(), bottomAppBarScrollBehavior = BottomAppBarScrollBehavior)
+}
+
+@HiltAndroidApp
+class MyApplication : Application() {
+    // You can initialize other things here if needed
 }

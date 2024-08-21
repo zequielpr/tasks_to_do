@@ -3,6 +3,16 @@
 
     <string name="all">All</string>
 
+    <string name="no_category">No category</string>
+    <string name="confirm">Confirm</string>
+    <string name="cancel">Cancel</string>
+    <string name="save">Save</string>
+    <string name="category_name">Category name</string>
+    <string name="introduce_category_name">Introduce category name</string>
+    <string name="introduce_task_name">Introduce task name</string>
+
+    <string name="task_name">Task name</string>
+
 
     <string name="tasks_list">Tasks</string>
     <string name="stats">stats</string>
@@ -13,4 +23,5 @@
     <string name="delete_task">Delete task</string>
     <string name="manage_categories">Manage categories</string>
     <string name="create_task">Create task</string>
+    <string name="create_category">Create category</string>
 </resources>

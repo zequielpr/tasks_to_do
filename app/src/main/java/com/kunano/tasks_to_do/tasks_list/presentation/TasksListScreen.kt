@@ -1,5 +1,7 @@
 package com.kunano.tasks_to_do.tasks_list.presentation
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -7,16 +9,19 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.BottomAppBarScrollBehavior
 import androidx.compose.material3.Card
 import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -27,7 +32,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ShapeDefaults
-import androidx.compose.material3.Shapes
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TopAppBarScrollBehavior
@@ -40,26 +44,30 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.AbsoluteAlignment
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.core.content.ContextCompat
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kunano.tasks_to_do.R
+import com.kunano.tasks_to_do.tasks_list.presentation.create_task.createTaskBottomSheet
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TasksListScreen(
-    viewModel: TaskListViewModel,
     paddingValues: PaddingValues,
-    bottomAppBarScrollBehavior: BottomAppBarScrollBehavior
+    bottomAppBarScrollBehavior: BottomAppBarScrollBehavior,
+    viewModel: TaskListViewModel = hiltViewModel()
 ) {
+    val tasksList by viewModel.tasksList.observeAsState()
 
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(rememberTopAppBarState())
     var floatingButtonExpanded by remember { mutableStateOf(true) }
+    var showCreateTaskBottomSheet by remember { mutableStateOf(false) }
 
     //If the top bar is visible the floating button must be expanded
     floatingButtonExpanded = scrollBehavior.state.heightOffset == 0.0f
@@ -72,7 +80,7 @@ fun TasksListScreen(
         ) {
 
             topBar(scrollBehavior = scrollBehavior, viewModel)
-            taskListContent(paddingValues, viewModel)
+            taskListContent(paddingValues, tasksList!!)
         }
 
         floatingActionButton(
@@ -81,7 +89,16 @@ fun TasksListScreen(
                 .align(AbsoluteAlignment.BottomRight)
                 .padding(paddingValues)
                 .padding(20.dp, 50.dp)
-        )
+        ) {
+            showCreateTaskBottomSheet = true
+        }
+
+        if (showCreateTaskBottomSheet) {
+            createTaskBottomSheet(onDismiss = {
+                showCreateTaskBottomSheet = false
+            })
+        }
+
     }/*Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = { topBar(scrollBehavior = scrollBehavior) },
@@ -100,7 +117,7 @@ fun topBar(scrollBehavior: TopAppBarScrollBehavior?, viewModel: TaskListViewMode
             containerColor = MaterialTheme.colorScheme.primaryContainer,
             titleContentColor = MaterialTheme.colorScheme.primary,
         ),
-        title = {TaskCategoryCarousel(viewModel = viewModel)},
+        title = { TaskCategoryCarousel(viewModel = viewModel) },
         actions = {
 
             IconButton(
@@ -117,6 +134,7 @@ fun topBar(scrollBehavior: TopAppBarScrollBehavior?, viewModel: TaskListViewMode
 }
 
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun TaskCategoryCarousel(viewModel: TaskListViewModel) {
 
@@ -138,7 +156,7 @@ fun TaskCategoryCarousel(viewModel: TaskListViewModel) {
                     selectedCategory = selectedCategory
                 ) { newlySelectedCategory ->
                     selectedCategory = newlySelectedCategory
-                    viewModel.selectTaskCategory(newlySelectedCategory)
+                    viewModel.filterByTaskCategory(newlySelectedCategory)
                 }
             }
         }
@@ -154,6 +172,7 @@ fun categoryBtn(
     selectCategory: (category: String) -> Unit
 ) {
     FilterChip(
+        colors = FilterChipDefaults.filterChipColors(selectedContainerColor = MaterialTheme.colorScheme.primary),
         shape = ShapeDefaults.Large,
         selected = label == selectedCategory,
         onClick = { selectCategory(label) },
@@ -179,11 +198,15 @@ fun dropDownMenu(isExpanded: Boolean, onDismissRequest: () -> Unit) {
 
 
 @Composable
-fun floatingActionButton(floatingButtonExpanded: Boolean, modifier: Modifier) {
+fun floatingActionButton(
+    floatingButtonExpanded: Boolean,
+    modifier: Modifier,
+    showBottomSheet: () -> Unit
+) {
     ExtendedFloatingActionButton(
         modifier = modifier,
         expanded = floatingButtonExpanded,
-        onClick = { },
+        onClick = showBottomSheet,
         icon = { Icon(Icons.Filled.Add, "Extended floating action button.") },
         text = { Text(text = stringResource(id = R.string.create_task)) },
     )
@@ -191,23 +214,26 @@ fun floatingActionButton(floatingButtonExpanded: Boolean, modifier: Modifier) {
 
 
 @Composable
-fun taskListContent(innerPadding: PaddingValues, viewModel: TaskListViewModel) {
+fun taskListContent(innerPadding: PaddingValues, tasksList: List<String>) {
 
-    val tasksList by viewModel.testData.observeAsState()
+    println("Recompose")
+    //val tasksList by viewModel.tasksList.observeAsState()
+
 
     LazyColumn(
+        state = rememberLazyListState(),
         modifier = Modifier
             .fillMaxSize()
             .padding(14.dp, 0.dp),
         contentPadding = innerPadding,
-        verticalArrangement = Arrangement.spacedBy(14.dp)
+        verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
 
-        tasksList?.let {
-
-            items(it.toList()) { taskName: String ->
-                taskCard(taskName = taskName)
-            }
+        items(tasksList) { taskName: String ->
+            taskCard(taskName = taskName)
+        }
+        item {
+            Box(modifier = Modifier.height(20.dp))
         }
     }
 
@@ -216,8 +242,16 @@ fun taskListContent(innerPadding: PaddingValues, viewModel: TaskListViewModel) {
 
 @Composable
 fun taskCard(taskName: String) {
+    var taskState by rememberSaveable { mutableStateOf(false) }
     Card(modifier = Modifier.fillMaxWidth()) {
-        Text(modifier = Modifier.padding(14.dp), text = taskName)
+        Row {
+            Checkbox(checked = taskState, onCheckedChange = { state -> taskState = state })
+            Text(
+                textDecoration = if (taskState) TextDecoration.LineThrough else null,
+                modifier = Modifier.padding(14.dp),
+                text = taskName
+            )
+        }
     }
 }
 
@@ -226,7 +260,7 @@ fun taskCard(taskName: String) {
 @Preview(showBackground = true)
 @Composable
 fun topBarPreview() {
-    topBar(scrollBehavior = null, TaskListViewModel())
+    topBar(scrollBehavior = null, viewModel = TaskListViewModel())
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -240,5 +274,5 @@ fun dropDownMenuPreview() {
 @Preview(showBackground = true)
 @Composable
 fun TaskListPreview() {
-    taskListContent(innerPadding = PaddingValues(20.dp), viewModel = TaskListViewModel())
+    taskListContent(innerPadding = PaddingValues(20.dp), listOf())
 }
