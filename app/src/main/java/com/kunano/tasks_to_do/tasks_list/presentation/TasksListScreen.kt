@@ -58,6 +58,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kunano.tasks_to_do.R
 import com.kunano.tasks_to_do.core.utils.navigateBackButton
 import com.kunano.tasks_to_do.core.utils.searchBar
+import com.kunano.tasks_to_do.core.utils.sortByDialog
 import com.kunano.tasks_to_do.tasks_list.presentation.create_task.createTaskBottomSheet
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -86,27 +87,23 @@ fun TasksListScreen(
                 .nestedScroll(bottomAppBarScrollBehavior.nestedScrollConnection)
         ) {
             if (tasksListScreedUiState.isSearchModeActive) {
-                TopAppBar(
-                    navigationIcon = {
-                        navigateBackButton(
-                            size = 40.dp,
-                            navigateBack = viewModel::deactivateSearchMode
-                        )
-                    },
-                    scrollBehavior = scrollBehavior,
-                    title = {
-                        searchBar(
-                            value = tasksListScreedUiState.searchingString,
-                            search = viewModel::search
-                        )
-                    })
+                TopAppBar(navigationIcon = {
+                    navigateBackButton(
+                        size = 40.dp, navigateBack = viewModel::deactivateSearchMode
+                    )
+                }, scrollBehavior = scrollBehavior, title = {
+                    searchBar(
+                        value = tasksListScreedUiState.searchingString,
+                        search = viewModel::search
+                    )
+                })
             } else {
-                topBar(
-                    scrollBehavior = scrollBehavior,
+                topBar(scrollBehavior = scrollBehavior,
                     tasksListScreenUiState = tasksListScreedUiState,
                     filter = viewModel::filterByTaskCategory,
-                    activateSearchMode = viewModel::activateSearchMode
-                )
+                    activateSearchMode = viewModel::activateSearchMode,
+                    showSortByDialog = viewModel::showSortByDialog,
+                    manageCategories = {})
             }
 
 
@@ -126,6 +123,17 @@ fun TasksListScreen(
             createTaskBottomSheet(onDismiss = viewModel::hideCreateTaskDialog)
         }
 
+        if (tasksListScreedUiState.showSortByDialog) {
+
+            sortByDialog(
+                title = tasksListScreedUiState.sortByDialogData.title,
+                selectedOption = tasksListScreedUiState.sortByDialogData.selectedOption,
+                options = tasksListScreedUiState.sortByDialogData.options,
+                selectOption = viewModel::selectSortByOption,
+                onDismiss = viewModel::hideSortByDialog
+            )
+        }
+
     }/*Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = { topBar(scrollBehavior = scrollBehavior) },
@@ -141,7 +149,9 @@ fun topBar(
     scrollBehavior: TopAppBarScrollBehavior?,
     tasksListScreenUiState: TasksListScreenUiState,
     filter: (category: String?) -> Unit,
-    activateSearchMode: () -> Unit
+    activateSearchMode: () -> Unit,
+    showSortByDialog: () -> Unit,
+    manageCategories: () -> Unit
 ) {
     var dropDownMenuExpanded by remember { mutableStateOf(false) }
     CenterAlignedTopAppBar(
@@ -151,22 +161,23 @@ fun topBar(
         ),
         title = {
             TaskCategoryCarousel(
-                tasksListScreenUiState = tasksListScreenUiState,
-                filter = filter
+                tasksListScreenUiState = tasksListScreenUiState, filter = filter
             )
         },
         actions = {
 
-            IconButton(
-                onClick = { dropDownMenuExpanded = true }) {
+            IconButton(onClick = { dropDownMenuExpanded = true }) {
                 Icon(
                     imageVector = Icons.Filled.MoreVert,
                     contentDescription = "Localized description"
                 )
             }
             dropDownMenu(
-                dropDownMenuExpanded, onDismissRequest = { dropDownMenuExpanded = false },
-                activateSearchMode
+                dropDownMenuExpanded,
+                onDismissRequest = { dropDownMenuExpanded = false },
+                activateSearchMode = activateSearchMode,
+                showSortByDialog = showSortByDialog,
+                manageCategories = manageCategories
             )
         },
         scrollBehavior = scrollBehavior,
@@ -177,8 +188,7 @@ fun topBar(
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun TaskCategoryCarousel(
-    tasksListScreenUiState: TasksListScreenUiState,
-    filter: (category: String?) -> Unit
+    tasksListScreenUiState: TasksListScreenUiState, filter: (category: String?) -> Unit
 ) {
 
 
@@ -187,8 +197,7 @@ fun TaskCategoryCarousel(
         horizontalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         item {
-            FilterChip(
-                colors = FilterChipDefaults.filterChipColors(selectedContainerColor = MaterialTheme.colorScheme.primary),
+            FilterChip(colors = FilterChipDefaults.filterChipColors(selectedContainerColor = MaterialTheme.colorScheme.primary),
                 shape = ShapeDefaults.Large,
                 selected = tasksListScreenUiState.selectedCategory == null,
                 onClick = { filter(null) },
@@ -212,12 +221,9 @@ fun TaskCategoryCarousel(
 
 @Composable
 fun categoryBtn(
-    label: String,
-    selectedCategory: String?,
-    selectCategory: (category: String) -> Unit
+    label: String, selectedCategory: String?, selectCategory: (category: String) -> Unit
 ) {
-    FilterChip(
-        colors = FilterChipDefaults.filterChipColors(selectedContainerColor = MaterialTheme.colorScheme.primary),
+    FilterChip(colors = FilterChipDefaults.filterChipColors(selectedContainerColor = MaterialTheme.colorScheme.primary),
         shape = ShapeDefaults.Large,
         selected = label == selectedCategory,
         onClick = { selectCategory(label) },
@@ -229,7 +235,9 @@ fun categoryBtn(
 fun dropDownMenu(
     isExpanded: Boolean,
     onDismissRequest: () -> Unit,
-    activateSearchMode: () -> Unit
+    activateSearchMode: () -> Unit,
+    showSortByDialog: () -> Unit,
+    manageCategories: () -> Unit
 ) {
 
     DropdownMenu(expanded = isExpanded, onDismissRequest = { onDismissRequest() }) {
@@ -237,12 +245,14 @@ fun dropDownMenu(
             text = { Text(text = stringResource(id = R.string.search)) },
             onClick = activateSearchMode
         )
-        DropdownMenuItem(text = { Text(text = stringResource(id = R.string.sort_by)) },
-            onClick = { /*TODO*/ })
-        DropdownMenuItem(text = { Text(text = stringResource(id = R.string.manage_categories)) },
-            onClick = { /*TODO*/ })
-        DropdownMenuItem(text = { Text(text = stringResource(id = R.string.delete_task)) },
-            onClick = { /*TODO*/ })
+        DropdownMenuItem(
+            text = { Text(text = stringResource(id = R.string.sort_by)) },
+            onClick = showSortByDialog
+        )
+        DropdownMenuItem(
+            text = { Text(text = stringResource(id = R.string.manage_categories)) },
+            onClick = manageCategories
+        )
     }
 
 }
@@ -250,9 +260,7 @@ fun dropDownMenu(
 
 @Composable
 fun floatingActionButton(
-    floatingButtonExpanded: Boolean,
-    modifier: Modifier,
-    showBottomSheet: () -> Unit
+    floatingButtonExpanded: Boolean, modifier: Modifier, showBottomSheet: () -> Unit
 ) {
     ExtendedFloatingActionButton(
         modifier = modifier,
@@ -312,18 +320,19 @@ fun taskCard(taskName: String) {
 @Composable
 fun topBarPreview() {
 
-    topBar(
-        scrollBehavior = null,
+    topBar(scrollBehavior = null,
         tasksListScreenUiState = TasksListScreenUiState(),
         filter = {},
-        activateSearchMode = {})
+        activateSearchMode = {},
+        showSortByDialog = {},
+        manageCategories = {})
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Preview(showBackground = true)
 @Composable
 fun dropDownMenuPreview() {
-    dropDownMenu(true, {}, activateSearchMode = {})
+    dropDownMenu(true, {}, activateSearchMode = {}, showSortByDialog = {}, manageCategories = {})
 }
 
 

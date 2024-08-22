@@ -15,6 +15,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
@@ -36,14 +38,21 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
@@ -311,8 +320,10 @@ fun searchBar(
                 value = value, onValueChange = search,
                 decorationBox = {
                     if (value.isEmpty()) {
-                        Text(style = TextStyle(color = Color.Gray, fontSize = 20.sp),
-                            text = stringResource(id = R.string.search) + "...")
+                        Text(
+                            style = TextStyle(color = Color.Gray, fontSize = 20.sp),
+                            text = stringResource(id = R.string.search) + "..."
+                        )
                     }
                     it()
                 }
@@ -346,15 +357,81 @@ fun searchBar(
 @Composable
 fun navigateBackButton(
     size: Dp,
-    navigateBack: () -> Unit) {
+    navigateBack: () -> Unit
+) {
     IconButton(onClick = navigateBack) {
         Icon(
             Icons.AutoMirrored.Filled.KeyboardArrowLeft,
             modifier = Modifier.size(size),
             contentDescription = stringResource(id = R.string.back),
 
-        )
+            )
     }
+}
+
+
+@Composable
+fun sortByDialog(
+    title: Int,
+    selectedOption: Int,
+    options: List<Int>,
+    selectOption: (option: Int) -> Unit,
+    onDismiss: () -> Unit,
+    modifier: Modifier = Modifier.padding(20.dp)
+) {
+
+    var radioButtonState by remember { mutableIntStateOf(selectedOption) }
+
+    Dialog(onDismissRequest = onDismiss) {
+        Card(modifier = modifier) {
+            Column(horizontalAlignment = (Alignment.CenterHorizontally), modifier = modifier) {
+                Text(
+                    style = TextStyle(fontWeight = FontWeight.Bold, fontSize = 16.sp),
+                    text = stringResource(id = title)
+                )
+                HorizontalDivider(modifier = Modifier.padding(0.dp, 10.dp))
+                LazyColumn {
+                    items(options) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            RadioButton(
+                                selected = it == radioButtonState,
+                                onClick = { radioButtonState = it })
+                            Text(
+                                modifier = Modifier.clickable { radioButtonState = it }.weight(1f),
+                                text = stringResource(id = it)
+                            )
+                        }
+                    }
+                }
+                TextButton(
+                    modifier = Modifier.align(Alignment.End),
+                    onClick = { selectOption(radioButtonState) }) {
+                    Text(text = stringResource(id = R.string.select))
+                }
+            }
+        }
+
+
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun sortByDialogPreview() {
+    val options = listOf(
+        R.string.due_date_and_time,
+        R.string.task_create_time_latest_at_the_top,
+        R.string.task_create_time_latest_at_the_bottom,
+        R.string.alphabetical_a_z,
+        R.string.alphabetical_z_a
+    )
+
+    sortByDialog(
+        title = R.string.sort_tasks_by,
+        selectedOption = R.string.due_date_and_time,
+        options = options,
+        selectOption = {},
+        onDismiss = {})
 }
 
 

@@ -11,6 +11,16 @@
     <string name="introduce_category_name">Introduce category name</string>
     <string name="introduce_task_name">Introduce task name</string>
     <string name="back">back</string>
+    <string name="due_date_and_time">Due date and time</string>
+
+    <string name="sort_tasks_by">Sort tasks by</string>
+    <string name="task_create_time_latest_at_the_top">Task create time (latest at the top)</string>
+    <string name="task_create_time_latest_at_the_bottom">Task create time (latest at the bottom)</string>
+    <string name="alphabetical_a_z">Alphabetical (A-Z)</string>
+    <string name="alphabetical_z_a">Alphabetical (Z-A)</string>
+
+    <string name="select">Select</string>
+
 
     <string name="task_name">Task name</string>
 

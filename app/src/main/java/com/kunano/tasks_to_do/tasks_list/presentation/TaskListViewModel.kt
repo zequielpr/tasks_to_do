@@ -25,17 +25,16 @@ class TaskListViewModel @Inject constructor() : ViewModel() {
     val tasksList: LiveData<List<String>> get() = _testData
 
 
-    var categoriesList: MutableLiveData<List<String>> =
-        MutableLiveData(
-            listOf(
-                "category 1",
-                "Task 2",
-                "category 3",
-                "Task 4",
-                "category 5",
-                "Task 6",
-            )
+    var categoriesList: MutableLiveData<List<String>> = MutableLiveData(
+        listOf(
+            "category 1",
+            "Task 2",
+            "category 3",
+            "Task 4",
+            "category 5",
+            "Task 6",
         )
+    )
 
     init {
         val tasksList = arrayListOf<String>()
@@ -52,6 +51,18 @@ class TaskListViewModel @Inject constructor() : ViewModel() {
 
         updateCategoriesList(categoryList = catList)
 
+    }
+
+    fun selectSortByOption(option: Int){
+        updateSortBySelectedOption(option = option)
+        hideSortByDialog()
+    }
+
+    fun showSortByDialog(){
+        updateShowSortByDialogState(show = true)
+    }
+    fun hideSortByDialog(){
+        updateShowSortByDialogState(show = false)
     }
 
 
@@ -82,6 +93,20 @@ class TaskListViewModel @Inject constructor() : ViewModel() {
         updateSelectedCategory(category)
     }
 
+
+    private fun updateSortBySelectedOption(option: Int) {
+        val newState = _tasksListScreenUiState.value.sortByDialogData
+        _tasksListScreenUiState.update { currentState ->
+            currentState.copy(sortByDialogData = currentState.sortByDialogData.copy(selectedOption = option))
+        }
+    }
+
+
+    private fun updateShowSortByDialogState(show: Boolean){
+        _tasksListScreenUiState.update { currentState ->
+            currentState.copy(showSortByDialog = show)
+        }
+    }
 
     private fun updateSearchingString(value: String) {
         _tasksListScreenUiState.update { currentState ->
