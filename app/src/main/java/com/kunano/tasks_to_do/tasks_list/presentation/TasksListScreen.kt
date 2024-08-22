@@ -1,6 +1,8 @@
 package com.kunano.tasks_to_do.tasks_list.presentation
 
 import android.os.Build
+import android.window.OnBackInvokedCallback
+import androidx.activity.compose.BackHandler
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -33,12 +35,12 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ShapeDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -46,14 +48,16 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.AbsoluteAlignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kunano.tasks_to_do.R
+import com.kunano.tasks_to_do.core.utils.navigateBackButton
+import com.kunano.tasks_to_do.core.utils.searchBar
 import com.kunano.tasks_to_do.tasks_list.presentation.create_task.createTaskBottomSheet
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -63,14 +67,17 @@ fun TasksListScreen(
     bottomAppBarScrollBehavior: BottomAppBarScrollBehavior,
     viewModel: TaskListViewModel = hiltViewModel()
 ) {
-    val tasksList by viewModel.tasksList.observeAsState()
+    val tasksListScreedUiState by viewModel.tasksListScreedUiState.collectAsStateWithLifecycle()
 
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(rememberTopAppBarState())
     var floatingButtonExpanded by remember { mutableStateOf(true) }
-    var showCreateTaskBottomSheet by remember { mutableStateOf(false) }
 
     //If the top bar is visible the floating button must be expanded
     floatingButtonExpanded = scrollBehavior.state.heightOffset == 0.0f
+
+    BackHandler(enabled = tasksListScreedUiState.isSearchModeActive) {
+        viewModel.deactivateSearchMode()
+    }
 
     Box(modifier = Modifier.fillMaxSize()) {
         Column(
@@ -78,9 +85,32 @@ fun TasksListScreen(
                 .nestedScroll(scrollBehavior.nestedScrollConnection)
                 .nestedScroll(bottomAppBarScrollBehavior.nestedScrollConnection)
         ) {
+            if (tasksListScreedUiState.isSearchModeActive) {
+                TopAppBar(
+                    navigationIcon = {
+                        navigateBackButton(
+                            size = 40.dp,
+                            navigateBack = viewModel::deactivateSearchMode
+                        )
+                    },
+                    scrollBehavior = scrollBehavior,
+                    title = {
+                        searchBar(
+                            value = tasksListScreedUiState.searchingString,
+                            search = viewModel::search
+                        )
+                    })
+            } else {
+                topBar(
+                    scrollBehavior = scrollBehavior,
+                    tasksListScreenUiState = tasksListScreedUiState,
+                    filter = viewModel::filterByTaskCategory,
+                    activateSearchMode = viewModel::activateSearchMode
+                )
+            }
 
-            topBar(scrollBehavior = scrollBehavior, viewModel)
-            taskListContent(paddingValues, tasksList!!)
+
+            taskListContent(paddingValues, tasksListScreedUiState.tasksList)
         }
 
         floatingActionButton(
@@ -88,15 +118,12 @@ fun TasksListScreen(
             Modifier
                 .align(AbsoluteAlignment.BottomRight)
                 .padding(paddingValues)
-                .padding(20.dp, 50.dp)
-        ) {
-            showCreateTaskBottomSheet = true
-        }
+                .padding(20.dp, 50.dp),
+            showBottomSheet = viewModel::showCreateTaskDialog
+        )
 
-        if (showCreateTaskBottomSheet) {
-            createTaskBottomSheet(onDismiss = {
-                showCreateTaskBottomSheet = false
-            })
+        if (tasksListScreedUiState.showCreateTaskDialog) {
+            createTaskBottomSheet(onDismiss = viewModel::hideCreateTaskDialog)
         }
 
     }/*Scaffold(
@@ -110,14 +137,24 @@ fun TasksListScreen(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun topBar(scrollBehavior: TopAppBarScrollBehavior?, viewModel: TaskListViewModel) {
+fun topBar(
+    scrollBehavior: TopAppBarScrollBehavior?,
+    tasksListScreenUiState: TasksListScreenUiState,
+    filter: (category: String?) -> Unit,
+    activateSearchMode: () -> Unit
+) {
     var dropDownMenuExpanded by remember { mutableStateOf(false) }
     CenterAlignedTopAppBar(
         colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
             containerColor = MaterialTheme.colorScheme.primaryContainer,
             titleContentColor = MaterialTheme.colorScheme.primary,
         ),
-        title = { TaskCategoryCarousel(viewModel = viewModel) },
+        title = {
+            TaskCategoryCarousel(
+                tasksListScreenUiState = tasksListScreenUiState,
+                filter = filter
+            )
+        },
         actions = {
 
             IconButton(
@@ -127,7 +164,10 @@ fun topBar(scrollBehavior: TopAppBarScrollBehavior?, viewModel: TaskListViewMode
                     contentDescription = "Localized description"
                 )
             }
-            dropDownMenu(dropDownMenuExpanded) { dropDownMenuExpanded = false }
+            dropDownMenu(
+                dropDownMenuExpanded, onDismissRequest = { dropDownMenuExpanded = false },
+                activateSearchMode
+            )
         },
         scrollBehavior = scrollBehavior,
     )
@@ -136,30 +176,35 @@ fun topBar(scrollBehavior: TopAppBarScrollBehavior?, viewModel: TaskListViewMode
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun TaskCategoryCarousel(viewModel: TaskListViewModel) {
+fun TaskCategoryCarousel(
+    tasksListScreenUiState: TasksListScreenUiState,
+    filter: (category: String?) -> Unit
+) {
 
-    val context = LocalContext.current
-    val categoriesList by viewModel.categoriesList.observeAsState()
-
-    var selectedCategory by rememberSaveable {
-        mutableStateOf("All")
-    }
 
     LazyRow(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(10.dp),
     ) {
-        categoriesList?.let { it ->
-            items(it.toList()) { categoryLabel ->
+        item {
+            FilterChip(
+                colors = FilterChipDefaults.filterChipColors(selectedContainerColor = MaterialTheme.colorScheme.primary),
+                shape = ShapeDefaults.Large,
+                selected = tasksListScreenUiState.selectedCategory == null,
+                onClick = { filter(null) },
+                label = { Text(text = stringResource(id = R.string.all)) })
+        }
+
+        if (tasksListScreenUiState.tasksList.isNotEmpty()) {
+            items(tasksListScreenUiState.tasksList) { categoryLabel ->
                 categoryBtn(
                     label = categoryLabel,
-                    selectedCategory = selectedCategory
-                ) { newlySelectedCategory ->
-                    selectedCategory = newlySelectedCategory
-                    viewModel.filterByTaskCategory(newlySelectedCategory)
-                }
+                    selectedCategory = tasksListScreenUiState.selectedCategory,
+                    selectCategory = filter
+                )
             }
         }
+
 
     }
 
@@ -168,7 +213,7 @@ fun TaskCategoryCarousel(viewModel: TaskListViewModel) {
 @Composable
 fun categoryBtn(
     label: String,
-    selectedCategory: String,
+    selectedCategory: String?,
     selectCategory: (category: String) -> Unit
 ) {
     FilterChip(
@@ -181,11 +226,17 @@ fun categoryBtn(
 
 
 @Composable
-fun dropDownMenu(isExpanded: Boolean, onDismissRequest: () -> Unit) {
+fun dropDownMenu(
+    isExpanded: Boolean,
+    onDismissRequest: () -> Unit,
+    activateSearchMode: () -> Unit
+) {
 
     DropdownMenu(expanded = isExpanded, onDismissRequest = { onDismissRequest() }) {
-        DropdownMenuItem(text = { Text(text = stringResource(id = R.string.search)) },
-            onClick = { /*TODO*/ })
+        DropdownMenuItem(
+            text = { Text(text = stringResource(id = R.string.search)) },
+            onClick = activateSearchMode
+        )
         DropdownMenuItem(text = { Text(text = stringResource(id = R.string.sort_by)) },
             onClick = { /*TODO*/ })
         DropdownMenuItem(text = { Text(text = stringResource(id = R.string.manage_categories)) },
@@ -260,14 +311,19 @@ fun taskCard(taskName: String) {
 @Preview(showBackground = true)
 @Composable
 fun topBarPreview() {
-    topBar(scrollBehavior = null, viewModel = TaskListViewModel())
+
+    topBar(
+        scrollBehavior = null,
+        tasksListScreenUiState = TasksListScreenUiState(),
+        filter = {},
+        activateSearchMode = {})
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Preview(showBackground = true)
 @Composable
 fun dropDownMenuPreview() {
-    dropDownMenu(true) {}
+    dropDownMenu(true, {}, activateSearchMode = {})
 }
 
 

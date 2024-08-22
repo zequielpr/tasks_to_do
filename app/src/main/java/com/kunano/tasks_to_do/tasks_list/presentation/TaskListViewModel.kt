@@ -1,25 +1,22 @@
 package com.kunano.tasks_to_do.tasks_list.presentation
 
-import android.database.Observable
-import androidx.collection.objectListOf
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.asFlow
-import androidx.lifecycle.asLiveData
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.map
-import androidx.lifecycle.switchMap
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.filter
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.update
 import javax.inject.Inject
 
 @HiltViewModel
 class TaskListViewModel @Inject constructor() : ViewModel() {
+
+    //Intern updates
+    private val _tasksListScreenUiState = MutableStateFlow(TasksListScreenUiState())
+
+    //Read only
+    val tasksListScreedUiState = _tasksListScreenUiState
+
 
     //Internal updates
     private var _testData: MutableLiveData<List<String>> = MutableLiveData(listOf())
@@ -46,25 +43,84 @@ class TaskListViewModel @Inject constructor() : ViewModel() {
         for (i in 100..200) {
             tasksList.add("Task $i")
         }
-        _testData.postValue(tasksList)
+        updateTasksList(tasksList)
 
-        for (i in 5..10) {
+
+        for (i in 3..7) {
             catList.add("category$i")
         }
-        categoriesList.postValue(catList)
+
+        updateCategoriesList(categoryList = catList)
 
     }
 
 
-
-
-
-
-    fun filterByTaskCategory(category: String) {
-
+    fun search(searchingString: String) {
+        updateSearchingString(searchingString)
     }
 
 
+    fun activateSearchMode() {
+        updateSearModeState(isActive = true)
+    }
+
+    fun deactivateSearchMode() {
+        updateSearModeState(isActive = false)
+    }
+
+
+    fun showCreateTaskDialog() {
+        updateShowCreateTaskDialogState(show = true)
+    }
+
+    fun hideCreateTaskDialog() {
+        updateShowCreateTaskDialogState(show = false)
+    }
+
+
+    fun filterByTaskCategory(category: String?) {
+        updateSelectedCategory(category)
+    }
+
+
+    private fun updateSearchingString(value: String) {
+        _tasksListScreenUiState.update { currentState ->
+            currentState.copy(searchingString = value)
+        }
+    }
+
+
+    private fun updateSearModeState(isActive: Boolean) {
+        _tasksListScreenUiState.update { currentState ->
+            currentState.copy(isSearchModeActive = isActive)
+        }
+    }
+
+
+    private fun updateShowCreateTaskDialogState(show: Boolean) {
+        _tasksListScreenUiState.update { currentState ->
+            currentState.copy(showCreateTaskDialog = show)
+        }
+    }
+
+
+    private fun updateSelectedCategory(category: String?) {
+        _tasksListScreenUiState.update { currentState ->
+            currentState.copy(selectedCategory = category)
+        }
+    }
+
+    private fun updateCategoriesList(categoryList: List<String>) {
+        _tasksListScreenUiState.update { currentState ->
+            currentState.copy(categoryList = categoryList)
+        }
+    }
+
+    private fun updateTasksList(tasksList: List<String>) {
+        _tasksListScreenUiState.update { currentState ->
+            currentState.copy(tasksList = tasksList)
+        }
+    }
 
 
 }

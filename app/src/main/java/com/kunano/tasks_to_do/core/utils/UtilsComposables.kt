@@ -1,20 +1,35 @@
 package com.kunano.tasks_to_do.core.utils
 
 import android.widget.Toast
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.KeyboardArrowLeft
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardColors
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.DropdownMenu
@@ -28,21 +43,33 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.util.fastForEach
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.PopupProperties
 import com.kunano.tasks_to_do.R
-import com.kunano.tasks_to_do.tasks_list.presentation.states.CreateCategoryUiState
+import com.kunano.tasks_to_do.tasks_list.presentation.create_task.CreateCategoryUiState
 
 @Composable
 fun dateModifier(
@@ -217,9 +244,11 @@ fun createCategoryDialogContent(
             .height(200.dp)
             .padding(10.dp),
         shape = RoundedCornerShape(16.dp),
-    ){
-        Column(modifier = modifier
-            .padding(10.dp)) {
+    ) {
+        Column(
+            modifier = modifier
+                .padding(10.dp)
+        ) {
             OutlinedTextField(
                 label = { Text(text = stringResource(id = R.string.category_name)) },
                 modifier = modifier,
@@ -249,11 +278,91 @@ fun createCategoryDialogContent(
 
 
 @Composable
-fun showToast(message: Int){
+fun showToast(message: Int) {
     val ctx = LocalContext.current
     Toast.makeText(ctx, message, Toast.LENGTH_SHORT).show()
 }
 
+
+@Composable
+fun searchBar(
+    value: String,
+    search: (value: String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier.height(40.dp),
+        shape = RoundedCornerShape(size = 40.dp),
+        colors = CardColors(
+            containerColor = Color.Transparent,
+            contentColor = Color.Black,
+            disabledContentColor = Color.Black,
+            disabledContainerColor = Color.Black
+        ),
+        border = BorderStroke(color = Color.Gray, width = 1.dp)
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            BasicTextField(
+                textStyle = TextStyle(fontSize = 20.sp),
+                singleLine = true,
+                modifier = modifier
+                    .padding(14.dp, 8.dp)
+                    .weight(1f),
+                value = value, onValueChange = search,
+                decorationBox = {
+                    if (value.isEmpty()) {
+                        Text(style = TextStyle(color = Color.Gray, fontSize = 20.sp),
+                            text = stringResource(id = R.string.search) + "...")
+                    }
+                    it()
+                }
+            )
+
+            Box {
+                if (value.isEmpty()) {
+                    IconButton(onClick = { /*TODO*/ }) {
+                        Icon(
+                            Icons.Default.Search,
+                            tint = Color.Gray,
+                            contentDescription = stringResource(id = R.string.search)
+                        )
+                    }
+                } else {
+                    IconButton(onClick = { search("") }) {
+                        Icon(
+                            Icons.Default.Clear,
+                            tint = Color.Gray,
+                            contentDescription = stringResource(id = R.string.search)
+                        )
+                    }
+                }
+            }
+
+        }
+    }
+}
+
+
+@Composable
+fun navigateBackButton(
+    size: Dp,
+    navigateBack: () -> Unit) {
+    IconButton(onClick = navigateBack) {
+        Icon(
+            Icons.AutoMirrored.Filled.KeyboardArrowLeft,
+            modifier = Modifier.size(size),
+            contentDescription = stringResource(id = R.string.back),
+
+        )
+    }
+}
+
+
+@Preview(showBackground = true)
+@Composable
+fun searchBarPreview() {
+    searchBar(value = "", search = {})
+}
 
 
 @Preview(showBackground = true)

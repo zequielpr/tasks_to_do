@@ -1,4 +1,4 @@
-package com.kunano.tasks_to_do.tasks_list.presentation.states
+package com.kunano.tasks_to_do.tasks_list.presentation.create_task
 
 data class CreateCategoryUiState(
     val showCreateCategoryDialog: Boolean = false,

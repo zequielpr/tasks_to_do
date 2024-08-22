@@ -87,7 +87,10 @@ fun navHost(
 
         navigation<BottomNavBarRoutes.TasksList>(startDestination = Routes.TasksListScreen) {
             composable<Routes.TasksListScreen> {
-                TasksListScreen(innerPadding, bottomAppBarScrollBehavior)
+                TasksListScreen(
+                    paddingValues = innerPadding,
+                    bottomAppBarScrollBehavior = bottomAppBarScrollBehavior
+                )
             }
             composable<Routes.TaskDetails> {
             }
@@ -152,9 +155,6 @@ fun bottomBar(navController: NavController, scrollBehavior: BottomAppBarScrollBe
 
     }
 }
-
-
-
 
 
 @OptIn(ExperimentalMaterial3Api::class)
