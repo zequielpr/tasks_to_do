@@ -1,7 +1,7 @@
 package com.kunano.tasks_to_do.tasks_list.presentation
 
+import Route
 import android.os.Build
-import android.window.OnBackInvokedCallback
 import androidx.activity.compose.BackHandler
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.Arrangement
@@ -49,7 +49,6 @@ import androidx.compose.ui.AbsoluteAlignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -66,6 +65,7 @@ import com.kunano.tasks_to_do.tasks_list.presentation.create_task.createTaskBott
 fun TasksListScreen(
     paddingValues: PaddingValues,
     bottomAppBarScrollBehavior: BottomAppBarScrollBehavior,
+    navigate: (route: Route) -> Unit,
     viewModel: TaskListViewModel = hiltViewModel()
 ) {
     val tasksListScreedUiState by viewModel.tasksListScreedUiState.collectAsStateWithLifecycle()
@@ -88,8 +88,7 @@ fun TasksListScreen(
         ) {
             if (tasksListScreedUiState.isSearchModeActive) {
                 TopAppBar(navigationIcon = {
-                    navigateBackButton(
-                        size = 40.dp, navigateBack = viewModel::deactivateSearchMode
+                    navigateBackButton( navigateBack = viewModel::deactivateSearchMode
                     )
                 }, scrollBehavior = scrollBehavior, title = {
                     searchBar(
@@ -103,7 +102,7 @@ fun TasksListScreen(
                     filter = viewModel::filterByTaskCategory,
                     activateSearchMode = viewModel::activateSearchMode,
                     showSortByDialog = viewModel::showSortByDialog,
-                    manageCategories = {})
+                    manageCategories = {navigate(Route.ManageCategories)})
             }
 
 
@@ -134,13 +133,7 @@ fun TasksListScreen(
             )
         }
 
-    }/*Scaffold(
-        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-        topBar = { topBar(scrollBehavior = scrollBehavior) },
-        floatingActionButton = { floatingActionButton(floatingButtonExpanded) },
-        bottomBar = { BottomNavigation(modifier = Modifier.navigationBarsPadding()){} }, //There must be a better solution to this padding problem
-        content = { paddingValues -> taskListContent(paddingValues, viewModel) }
-    )*/
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -169,7 +162,7 @@ fun topBar(
             IconButton(onClick = { dropDownMenuExpanded = true }) {
                 Icon(
                     imageVector = Icons.Filled.MoreVert,
-                    contentDescription = "Localized description"
+                    contentDescription = null
                 )
             }
             dropDownMenu(
@@ -243,15 +236,24 @@ fun dropDownMenu(
     DropdownMenu(expanded = isExpanded, onDismissRequest = { onDismissRequest() }) {
         DropdownMenuItem(
             text = { Text(text = stringResource(id = R.string.search)) },
-            onClick = activateSearchMode
+            onClick = {
+                activateSearchMode()
+                onDismissRequest()
+            }
         )
         DropdownMenuItem(
             text = { Text(text = stringResource(id = R.string.sort_by)) },
-            onClick = showSortByDialog
+            onClick = {
+                showSortByDialog()
+                onDismissRequest()
+            }
         )
         DropdownMenuItem(
             text = { Text(text = stringResource(id = R.string.manage_categories)) },
-            onClick = manageCategories
+            onClick = {
+                manageCategories()
+                onDismissRequest()
+            }
         )
     }
 
@@ -274,9 +276,6 @@ fun floatingActionButton(
 
 @Composable
 fun taskListContent(innerPadding: PaddingValues, tasksList: List<String>) {
-
-    println("Recompose")
-    //val tasksList by viewModel.tasksList.observeAsState()
 
 
     LazyColumn(

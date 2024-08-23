@@ -1,10 +1,10 @@
 package com.kunano.tasks_to_do
 
+import Route
 import android.app.Application
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.BottomAppBar
@@ -17,16 +17,11 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.view.WindowCompat
-import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavController
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavHostController
@@ -36,10 +31,9 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
 import com.kunano.tasks_to_do.core.Routes.BottomNavBarRoutes
-import com.kunano.tasks_to_do.core.Routes.Routes
-import com.kunano.tasks_to_do.tasks_list.presentation.TaskListViewModel
 import com.kunano.tasks_to_do.tasks_list.presentation.TasksListScreen
 import com.kunano.tasks_to_do.core.theme.Tasks_to_doTheme
+import com.kunano.tasks_to_do.tasks_list.presentation.manage_category.ManageCategoriesScreen
 import dagger.hilt.android.AndroidEntryPoint
 import dagger.hilt.android.HiltAndroidApp
 
@@ -84,20 +78,29 @@ fun navHost(
         navController = navController,
         startDestination = BottomNavBarRoutes.TasksList
     ) {
-
-        navigation<BottomNavBarRoutes.TasksList>(startDestination = Routes.TasksListScreen) {
-            composable<Routes.TasksListScreen> {
+        navigation<BottomNavBarRoutes.TasksList>(startDestination = Route.TasksListScreen) {
+            composable<Route.TasksListScreen> {
                 TasksListScreen(
                     paddingValues = innerPadding,
-                    bottomAppBarScrollBehavior = bottomAppBarScrollBehavior
+                    bottomAppBarScrollBehavior = bottomAppBarScrollBehavior,
+                    navigate = { navigate(navController, it) }
                 )
             }
-            composable<Routes.TaskDetails> {
+            composable<Route.TaskDetails> {
+            }
+
+            composable<Route.ManageCategories> {
+                ManageCategoriesScreen(
+                    paddingValues = innerPadding,
+                    bottomAppBarScrollBehavior = bottomAppBarScrollBehavior,
+                    navigate = {},
+                    navigateBack = { navigateBack(navController) }
+                )
             }
         }
 
-        navigation<BottomNavBarRoutes.Stats>(startDestination = Routes.StatsScreen) {
-            composable<Routes.StatsScreen> {
+        navigation<BottomNavBarRoutes.Stats>(startDestination = Route.StatsScreen) {
+            composable<Route.StatsScreen> {
 
             }
         }
@@ -154,6 +157,15 @@ fun bottomBar(navController: NavController, scrollBehavior: BottomAppBarScrollBe
         }
 
     }
+}
+
+
+fun  navigate(navController: NavController, route: Route){
+    navController.navigate(route)
+}
+
+fun  navigateBack(navController: NavController){
+    navController.popBackStack()
 }
 
 

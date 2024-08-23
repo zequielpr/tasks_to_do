@@ -60,6 +60,7 @@ class TaskListViewModel @Inject constructor() : ViewModel() {
 
     fun showSortByDialog(){
         updateShowSortByDialogState(show = true)
+
     }
     fun hideSortByDialog(){
         updateShowSortByDialogState(show = false)

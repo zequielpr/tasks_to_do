@@ -7,6 +7,7 @@
     <string name="confirm">Confirm</string>
     <string name="cancel">Cancel</string>
     <string name="save">Save</string>
+    <string name="update">Update</string>
     <string name="category_name">Category name</string>
     <string name="introduce_category_name">Introduce category name</string>
     <string name="introduce_task_name">Introduce task name</string>
@@ -22,6 +23,8 @@
     <string name="select">Select</string>
 
 
+
+
     <string name="task_name">Task name</string>
 
 
@@ -31,7 +34,9 @@
 
     <string name="search">Search</string>
     <string name="sort_by">Sort by</string>
-    <string name="delete_task">Delete task</string>
+    <string name="delete">Delete</string>
+    <string name="delete_this_category">Delete this category</string>
+    <string name="edit">Edit</string>
     <string name="manage_categories">Manage categories</string>
     <string name="create_task">Create task</string>
     <string name="create_category">Create category</string>
