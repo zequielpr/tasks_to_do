@@ -3,40 +3,49 @@ package com.kunano.tasks_to_do.tasks_list.presentation.task_details
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kunano.tasks_to_do.tasks_list.presentation.manage_category.ManageCategoriesScreenState
+import com.kunano.tasks_to_do.tasks_list.presentation.manage_category.ManageCategoriesViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.updateAndGet
 import kotlinx.coroutines.launch
 import java.util.UUID
 import javax.inject.Inject
 
 @HiltViewModel
-class TaskDetailViewModel @Inject constructor() : ViewModel() {
+class TaskDetailViewModel @Inject constructor() :
+    ViewModel() {
     private val _taskDetailUiState: MutableStateFlow<TaskDetailsUiState> =
         MutableStateFlow(TaskDetailsUiState())
-    private val _manageCategoriesUiState: MutableStateFlow<ManageCategoriesScreenState> =
-        MutableStateFlow(ManageCategoriesScreenState())
 
     val taskDetail: StateFlow<TaskDetailsUiState> = _taskDetailUiState
-    val manageCategoriesScreenState: StateFlow<ManageCategoriesScreenState> =
-        _manageCategoriesUiState
 
 
-    private var categoriesList = listOf(
-        "category 1",
-        "Task 2",
-        "category 3",
-    )
 
-    init {
-        _manageCategoriesUiState.update { currentState ->
-            currentState.copy(categoryList = categoriesList)
-        }
+    fun showTimePicker(){
+        updateShowTimePicker(show = true)
+    }
+
+    fun hideTimePicker(){
+        updateShowTimePicker(show = false)
     }
 
 
-    fun updateSubTaskState(subTaskId: String, state: Boolean){
+    fun showDatePicker(){
+        updateShowDueDatePicker(show = true)
+    }
+
+    fun hideDatePicker(){
+        updateShowDueDatePicker(show = false)
+    }
+
+    fun selectDropDownMenuAction(action: Int){
+
+    }
+
+
+    fun updateSubTaskState(subTaskId: String, state: Boolean) {
         updateSubTaskInput(isDone = state, subTaskId = subTaskId)
     }
 
@@ -53,15 +62,28 @@ class TaskDetailViewModel @Inject constructor() : ViewModel() {
     }
 
     fun setTaskCategory(category: String?) {
-
+        println("category: $category")
     }
 
-    fun setDueDate(dueDate: Long) {
+    fun setDueDate(dueDate: Long?) {
 
     }
 
     fun setTimeReminder(time: Long) {
 
+    }
+
+
+    private fun updateShowTimePicker(show: Boolean){
+        _taskDetailUiState.update { currentState ->
+            currentState.copy(showTimePicker = show)
+        }
+    }
+
+    private fun updateShowDueDatePicker(show: Boolean){
+        _taskDetailUiState.update { currentState ->
+            currentState.copy(showDueDatePicker = show)
+        }
     }
 
 
@@ -105,8 +127,6 @@ class TaskDetailViewModel @Inject constructor() : ViewModel() {
 
         }
     }
-
-
 
 
     private fun deleteSubTaskInput(subTaskInputState: SubTaskInputState) {

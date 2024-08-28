@@ -39,6 +39,7 @@ import com.kunano.tasks_to_do.tasks_list.presentation.TasksListScreen
 import com.kunano.tasks_to_do.core.theme.Tasks_to_doTheme
 import com.kunano.tasks_to_do.tasks_list.presentation.manage_category.ManageCategoriesScreen
 import com.kunano.tasks_to_do.tasks_list.presentation.task_details.TaskDetailScreen
+import com.kunano.tasks_to_do.tasks_list.presentation.task_details.notes.NoteScreen
 import dagger.hilt.android.AndroidEntryPoint
 import dagger.hilt.android.HiltAndroidApp
 
@@ -109,7 +110,7 @@ fun navHost(
                     taskKey = args.taskKey,
                     contentPadding = innerPadding,
                     bottomAppBarScrollBehavior = bottomAppBarScrollBehavior,
-                    navigate = {route -> navigate(navController, route) },
+                    navigate = { route -> navigate(navController, route) },
                     navigateBack = { navigateBack(navController) })
             }
 
@@ -118,6 +119,16 @@ fun navHost(
                     paddingValues = innerPadding,
                     navigate = {},
                     navigateBack = { navigateBack(navController) }
+                )
+            }
+
+            composable<Route.NoteScreen> {
+                val arg = it.toRoute<Route.NoteScreen>()
+                val taskKey = arg.taskKey
+                NoteScreen(
+                    navigateBack = { navigateBack(navController) },
+                    taskKey = taskKey,
+                    paddingValues = innerPadding
                 )
             }
         }
@@ -131,6 +142,7 @@ fun navHost(
                 )
             }
         }
+
 
     }
 
@@ -185,7 +197,7 @@ fun bottomBar(navController: NavController, scrollBehavior: BottomAppBarScrollBe
 
 
 fun navigate(navController: NavController, route: Route) {
-    navController.navigate(route){
+    navController.navigate(route) {
         // Pop up to the start destination to prevent stacking
         popUpTo(route) {
             saveState = true

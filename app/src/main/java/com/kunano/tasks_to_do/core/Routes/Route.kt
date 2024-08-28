@@ -25,4 +25,8 @@ sealed class Route(val route: String, @StringRes val resourceId: Int) {
     data object StatsScreen : Route("StatsScreen", R.string.stats)
 
 
+    @Serializable
+    data class NoteScreen(val taskKey: String) : Route("NoteScreen", R.string.notes)
+
+
 }

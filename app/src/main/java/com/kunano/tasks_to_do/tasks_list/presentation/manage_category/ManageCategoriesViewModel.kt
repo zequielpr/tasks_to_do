@@ -30,7 +30,22 @@ class ManageCategoriesViewModel @Inject constructor() : ViewModel() {
         _manageCategoriesScreenState.asStateFlow()
 
 
-    fun addCategory() {
+    private var categoriesList = listOf(
+        "category 1",
+        "Task 2",
+        "category 3",
+    )
+
+    init {
+        _manageCategoriesScreenState.update { currentState ->
+            currentState.copy(categoryList = categoriesList)
+        }
+    }
+
+
+
+
+    fun showAddAcategoryDialog() {
         deactivateEditingMode()
         showCreateOrUpdateTaskDialog()
     }

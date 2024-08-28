@@ -13,7 +13,6 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material3.BottomAppBarScrollBehavior
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -71,7 +70,7 @@ fun ManageCategoriesScreen(
                 scrollBehavior = scrollBehavior,
                 navigationIcon = { navigateBackButton(navigateBack = navigateBack) },
                 actions = {
-                    IconButton(onClick = viewModel::addCategory) {
+                    IconButton(onClick = viewModel::showAddAcategoryDialog) {
                         Icon(Icons.Default.Add, contentDescription = null)
                     }
                 },
@@ -95,7 +94,7 @@ fun ManageCategoriesScreen(
 
 
         createCategoryDialog(
-            createCategoryUiState = manageCategoriesScreenState,
+            manageCategoriesScreenState = manageCategoriesScreenState,
             onValueChange = viewModel::onChangeCategoryName,
             buttonTitle = if (manageCategoriesScreenState.editMode) R.string.update else R.string.save,
             onDismiss = { viewModel.hideCreateOrUpdateTaskDialog() },

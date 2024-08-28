@@ -117,7 +117,7 @@ fun bottomSheetContent(
             ) {
 
                 createCategoryDialog(
-                    createCategoryUiState = manageCategoriesScreenState,
+                    manageCategoriesScreenState = manageCategoriesScreenState,
                     onValueChange = onCategoryNameChange,
                     onDismiss = onCategoryDialogDismiss,
                     createCategory = createCategory

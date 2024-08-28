@@ -22,6 +22,8 @@
     <string name="alphabetical_z_a">Alphabetical (Z-A)</string>
     <string name="time_and_reminder">Time and reminder</string>
     <string name="notes">Notes</string>
+    <string name="note_title">Note title</string>
+    <string name="note_content">Note content</string>
 
     <string name="select">Select</string>
     <string name="input_sub_task_name">Input subTask name</string>

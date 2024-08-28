@@ -1,6 +1,7 @@
 package com.kunano.tasks_to_do.tasks_list.presentation.task_details
 
 import com.kunano.tasks_to_do.R
+import com.kunano.tasks_to_do.core.utils.Utils
 
 
 data class TaskDetailsUiState(
@@ -8,7 +9,9 @@ data class TaskDetailsUiState(
 
     val subTasksInputInputState: List<SubTaskInputState> = mutableListOf(),
     val subTaskToBeAdded: Boolean = false,
-    val showDueDateModifier: Boolean = false,
+    val showDueDatePicker: Boolean = false,
+    val showTimePicker: Boolean = false,
+    val dueDate: Long = Utils.getCurrentTimeInMilliseconds(),
     val category: String? = null,
     val reminder: Reminder? = null,
     val attachedNote: AttachedNote? = null,
