@@ -47,7 +47,6 @@ import com.kunano.tasks_to_do.core.utils.navigateBackButton
 @Composable
 fun ManageCategoriesScreen(
     paddingValues: PaddingValues,
-    bottomAppBarScrollBehavior: BottomAppBarScrollBehavior,
     navigate: (route: Route) -> Unit,
     navigateBack: () -> Unit,
     viewModel: ManageCategoriesViewModel = hiltViewModel()
@@ -56,7 +55,6 @@ fun ManageCategoriesScreen(
 
     val manageCategoriesScreenState by viewModel.manageCategoriesScreenState.collectAsStateWithLifecycle()
 
-    val createCategoryUiState by viewModel.createCategoryUiState.collectAsStateWithLifecycle()
 
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(rememberTopAppBarState())
 
@@ -68,7 +66,6 @@ fun ManageCategoriesScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .nestedScroll(scrollBehavior.nestedScrollConnection)
-                .nestedScroll(bottomAppBarScrollBehavior.nestedScrollConnection)
         ) {
             TopAppBar(
                 scrollBehavior = scrollBehavior,
@@ -98,11 +95,11 @@ fun ManageCategoriesScreen(
 
 
         createCategoryDialog(
-            createCategoryUiState = createCategoryUiState,
+            createCategoryUiState = manageCategoriesScreenState,
             onValueChange = viewModel::onChangeCategoryName,
             buttonTitle = if (manageCategoriesScreenState.editMode) R.string.update else R.string.save,
             onDismiss = { viewModel.hideCreateOrUpdateTaskDialog() },
-            createCategory = {})
+            createCategory = viewModel::saveChanges)
 
     }
 

@@ -13,15 +13,22 @@
     <string name="introduce_task_name">Introduce task name</string>
     <string name="back">back</string>
     <string name="due_date_and_time">Due date and time</string>
+    <string name="due_date">Due date</string>
 
     <string name="sort_tasks_by">Sort tasks by</string>
     <string name="task_create_time_latest_at_the_top">Task create time (latest at the top)</string>
     <string name="task_create_time_latest_at_the_bottom">Task create time (latest at the bottom)</string>
     <string name="alphabetical_a_z">Alphabetical (A-Z)</string>
     <string name="alphabetical_z_a">Alphabetical (Z-A)</string>
+    <string name="time_and_reminder">Time and reminder</string>
+    <string name="notes">Notes</string>
 
     <string name="select">Select</string>
+    <string name="input_sub_task_name">Input subTask name</string>
 
+    <string name="mark_as_done">Mark as done</string>
+    <string name="duplicate_task">Duplicate task</string>
+    <string name="add_sub_task">Add subtask</string>
 
 
 

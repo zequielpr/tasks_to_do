@@ -3,6 +3,7 @@ package com.kunano.tasks_to_do.tasks_list.presentation.create_task
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kunano.tasks_to_do.core.utils.Utils
+import com.kunano.tasks_to_do.tasks_list.presentation.manage_category.ManageCategoriesScreenState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -18,13 +19,13 @@ import javax.inject.Inject
 class CreateTaskViewModel @Inject constructor(): ViewModel() {
     //The business logic can be updated from this view model
     private val _createTaskUiState = MutableStateFlow(CreateTaskUiState())
-    private val _createCategoryUiState = MutableStateFlow(CreateCategoryUiState())
+    private val _manageCategoriesScreenState = MutableStateFlow(ManageCategoriesScreenState())
 
     private val _showIntroduceTaskNameToast = MutableSharedFlow<Boolean>()
 
     //Read only
     val createTaskUiState: StateFlow<CreateTaskUiState> = _createTaskUiState.asStateFlow()
-    val createCategoryUiState: StateFlow<CreateCategoryUiState> = _createCategoryUiState.asStateFlow()
+    val manageCategoriesScreenState: StateFlow<ManageCategoriesScreenState> = _manageCategoriesScreenState.asStateFlow()
 
     val showIntroduceTaskNameToast: SharedFlow<Boolean> = _showIntroduceTaskNameToast.asSharedFlow()
 
@@ -37,8 +38,8 @@ class CreateTaskViewModel @Inject constructor(): ViewModel() {
     )
 
     init {
-        _createTaskUiState.update { createTaskUiState ->
-            createTaskUiState.copy(categoryList = categoriesList)
+        _manageCategoriesScreenState.update { currentState ->
+            currentState.copy(categoryList =  categoriesList)
         }
     }
 
@@ -63,7 +64,7 @@ class CreateTaskViewModel @Inject constructor(): ViewModel() {
 
 
     fun createCategory(){
-        val categoryName = _createCategoryUiState.value.categoryName
+        val categoryName = _manageCategoriesScreenState.value.categoryName
         if (categoryName.isEmpty()){
             showCategoryErrorMessage()
             return
@@ -144,26 +145,26 @@ class CreateTaskViewModel @Inject constructor(): ViewModel() {
 
 
     private fun updateShowCategoryDialogState(show: Boolean){
-        _createCategoryUiState.update { currentState ->
+        _manageCategoriesScreenState.update { currentState ->
             currentState.copy(showCreateCategoryDialog = show)
         }
     }
 
 
     private fun updateCategoryTextFieldContent(value: String){
-        _createCategoryUiState.update { currentState ->
+        _manageCategoriesScreenState.update { currentState ->
             currentState.copy(categoryName = value)
         }
     }
 
     private fun updateShowCategoryErrorMessageState(show: Boolean){
-        _createCategoryUiState.update { currentState ->
+        _manageCategoriesScreenState.update { currentState ->
             currentState.copy(showErrorMessage = show)
         }
     }
 
     private fun updateShowCreateCategoryDialogState(state: Boolean){
-        _createCategoryUiState.update { currentState->
+        _manageCategoriesScreenState.update { currentState->
             currentState.copy(showErrorMessage = state)
         }
     }

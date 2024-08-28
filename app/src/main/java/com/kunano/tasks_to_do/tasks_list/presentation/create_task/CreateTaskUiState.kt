@@ -11,5 +11,4 @@ data class CreateTaskUiState(
     val selectedDayOfMonth: Int = LocalDateTime.now().dayOfMonth,
     val selectedCategoryInBottomSheet: String? = null,
     val taskName: String = "",
-    val categoryList: List<String> = listOf()
 )

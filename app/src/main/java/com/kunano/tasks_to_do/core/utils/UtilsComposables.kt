@@ -3,6 +3,8 @@ package com.kunano.tasks_to_do.core.utils
 import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -21,8 +23,10 @@ import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardColors
 import androidx.compose.material3.DatePicker
@@ -37,12 +41,14 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
+import androidx.compose.material3.ShapeDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -62,7 +68,29 @@ import androidx.compose.ui.util.fastForEach
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.PopupProperties
 import com.kunano.tasks_to_do.R
-import com.kunano.tasks_to_do.tasks_list.presentation.create_task.CreateCategoryUiState
+import com.kunano.tasks_to_do.tasks_list.presentation.manage_category.ManageCategoriesScreenState
+
+
+@Composable
+fun basicDropDownMenu(
+    optionsList: List<Int>,
+    selectOption: (option: Int) -> Unit,
+) {
+    var isMenuExpanded by remember { mutableStateOf(false) }
+    IconButton(onClick = { isMenuExpanded = true }) {
+        Icon(Icons.Filled.MoreVert, contentDescription = null)
+    }
+
+    DropdownMenu(expanded = isMenuExpanded, onDismissRequest = { isMenuExpanded = false }) {
+        optionsList.fastForEach {
+            DropdownMenuItem(
+                text = { Text(text = stringResource(id = it)) },
+                onClick = { selectOption(it) })
+        }
+    }
+
+}
+
 
 @Composable
 fun dateModifier(
@@ -139,6 +167,40 @@ fun datePicker(
 
 
 @Composable
+fun categoryAssistChip(
+    categoriesList: List<String>,
+    selectedCategory: String?,
+    selectItem: (category: String?) -> Unit,
+    showCreateCategoryDialog: () -> Unit
+) {
+    var menuExpanded by remember {
+        mutableStateOf(false)
+    }
+    Box() {
+        CategoriesDropDownMenu(
+            itemsList = categoriesList,
+            menuExpanded = menuExpanded,
+            onDismiss = { menuExpanded = false },
+            selectItem = selectItem,
+            createCategory = showCreateCategoryDialog
+        )
+
+        AssistChip(
+            shape = ShapeDefaults.Medium,
+            onClick = { menuExpanded = true },
+            label = {
+                Text(
+                    text = selectedCategory
+                        ?: stringResource(
+                            id = R.string.no_category
+                        )
+                )
+            })
+    }
+}
+
+
+@Composable
 fun CategoriesDropDownMenu(
     itemsList: List<String>,
     menuExpanded: Boolean,
@@ -203,7 +265,7 @@ fun CategoriesDropDownMenu(
 
 @Composable
 fun createCategoryDialog(
-    createCategoryUiState: CreateCategoryUiState,
+    createCategoryUiState: ManageCategoriesScreenState,
     onValueChange: (category: String) -> Unit,
     onDismiss: () -> Unit,
     buttonTitle: (Int)? = R.string.save,
@@ -228,7 +290,7 @@ fun createCategoryDialog(
 
 @Composable
 fun createCategoryDialogContent(
-    createCategoryUiState: CreateCategoryUiState,
+    createCategoryUiState: ManageCategoriesScreenState,
     onValueChange: (category: String) -> Unit,
     createCategory: () -> Unit,
     buttonTitle: Int,
@@ -298,22 +360,12 @@ fun searchBar(
         border = BorderStroke(color = Color.Gray, width = 1.dp)
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            BasicTextField(
-                textStyle = TextStyle(fontSize = 20.sp),
-                singleLine = true,
-                modifier = modifier
+            //Basic textField
+            customBasicTextField(
+                hint = R.string.search,
+                modifier = Modifier
                     .padding(14.dp, 8.dp)
-                    .weight(1f),
-                value = value, onValueChange = search,
-                decorationBox = {
-                    if (value.isEmpty()) {
-                        Text(
-                            style = TextStyle(color = Color.Gray, fontSize = 20.sp),
-                            text = stringResource(id = R.string.search) + "..."
-                        )
-                    }
-                    it()
-                }
+                    .weight(1f), value = value, onValueChange = search
             )
 
             Box {
@@ -338,6 +390,33 @@ fun searchBar(
 
         }
     }
+}
+
+@Composable
+fun customBasicTextField(
+    modifier: Modifier,
+    value: String,
+    hint: Int,
+    mutableInteractionSource: (MutableInteractionSource)? = MutableInteractionSource(),
+    onValueChange: (value: String) -> Unit,
+
+    ) {
+    BasicTextField(
+        modifier = modifier,
+        textStyle = TextStyle(fontSize = 20.sp),
+        singleLine = true,
+        value = value, onValueChange = onValueChange,
+        interactionSource = mutableInteractionSource,
+        decorationBox = {
+            if (value.isEmpty()) {
+                Text(
+                    style = TextStyle(color = Color.Gray, fontSize = 20.sp),
+                    text = stringResource(id = hint) + "..."
+                )
+            }
+            it()
+        }
+    )
 }
 
 
@@ -490,7 +569,7 @@ fun datePickerPreview() {
 @Composable
 fun createCategoryDialogPreview() {
     createCategoryDialogContent(
-        CreateCategoryUiState(),
+        ManageCategoriesScreenState(),
         createCategory = {},
         buttonTitle = R.string.save,
         onValueChange = {})

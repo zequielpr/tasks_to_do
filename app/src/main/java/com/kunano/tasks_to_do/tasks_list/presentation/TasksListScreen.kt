@@ -4,6 +4,7 @@ import Route
 import android.os.Build
 import androidx.activity.compose.BackHandler
 import androidx.annotation.RequiresApi
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -20,7 +21,6 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material3.BottomAppBarScrollBehavior
 import androidx.compose.material3.Card
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.Checkbox
@@ -54,6 +54,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.Navigation
+import androidx.navigation.compose.rememberNavController
 import com.kunano.tasks_to_do.R
 import com.kunano.tasks_to_do.core.utils.navigateBackButton
 import com.kunano.tasks_to_do.core.utils.searchBar
@@ -64,10 +66,11 @@ import com.kunano.tasks_to_do.tasks_list.presentation.create_task.createTaskBott
 @Composable
 fun TasksListScreen(
     paddingValues: PaddingValues,
-    bottomAppBarScrollBehavior: BottomAppBarScrollBehavior,
     navigate: (route: Route) -> Unit,
     viewModel: TaskListViewModel = hiltViewModel()
 ) {
+    val navController = rememberNavController()
+
     val tasksListScreedUiState by viewModel.tasksListScreedUiState.collectAsStateWithLifecycle()
 
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(rememberTopAppBarState())
@@ -84,11 +87,11 @@ fun TasksListScreen(
         Column(
             modifier = Modifier
                 .nestedScroll(scrollBehavior.nestedScrollConnection)
-                .nestedScroll(bottomAppBarScrollBehavior.nestedScrollConnection)
         ) {
             if (tasksListScreedUiState.isSearchModeActive) {
                 TopAppBar(navigationIcon = {
-                    navigateBackButton( navigateBack = viewModel::deactivateSearchMode
+                    navigateBackButton(
+                        navigateBack = viewModel::deactivateSearchMode
                     )
                 }, scrollBehavior = scrollBehavior, title = {
                     searchBar(
@@ -102,11 +105,16 @@ fun TasksListScreen(
                     filter = viewModel::filterByTaskCategory,
                     activateSearchMode = viewModel::activateSearchMode,
                     showSortByDialog = viewModel::showSortByDialog,
-                    manageCategories = {navigate(Route.ManageCategories)})
+                    manageCategories = { navigate(Route.ManageCategories) })
             }
 
 
-            taskListContent(paddingValues, tasksListScreedUiState.tasksList)
+            taskListContent(
+                paddingValues,
+                tasksListScreedUiState.tasksList,
+                navigateToTaskDetails = {
+                   navigate(Route.TaskDetails(taskKey = it))
+                })
         }
 
         floatingActionButton(
@@ -275,7 +283,11 @@ fun floatingActionButton(
 
 
 @Composable
-fun taskListContent(innerPadding: PaddingValues, tasksList: List<String>) {
+fun taskListContent(
+    innerPadding: PaddingValues,
+    tasksList: List<String>,
+    navigateToTaskDetails: (taskId: String) -> Unit
+) {
 
 
     LazyColumn(
@@ -288,7 +300,7 @@ fun taskListContent(innerPadding: PaddingValues, tasksList: List<String>) {
     ) {
 
         items(tasksList) { taskName: String ->
-            taskCard(taskName = taskName)
+            taskCard(taskName = taskName, navigateToTaskDetails)
         }
         item {
             Box(modifier = Modifier.height(20.dp))
@@ -299,9 +311,11 @@ fun taskListContent(innerPadding: PaddingValues, tasksList: List<String>) {
 
 
 @Composable
-fun taskCard(taskName: String) {
+fun taskCard(taskName: String, navigateToTaskDetails: (taskId: String) -> Unit) {
     var taskState by rememberSaveable { mutableStateOf(false) }
-    Card(modifier = Modifier.fillMaxWidth()) {
+    Card(modifier = Modifier
+        .fillMaxWidth()
+        .clickable { navigateToTaskDetails(taskName) }) {
         Row {
             Checkbox(checked = taskState, onCheckedChange = { state -> taskState = state })
             Text(
@@ -338,5 +352,5 @@ fun dropDownMenuPreview() {
 @Preview(showBackground = true)
 @Composable
 fun TaskListPreview() {
-    taskListContent(innerPadding = PaddingValues(20.dp), listOf())
+    taskListContent(innerPadding = PaddingValues(20.dp), listOf(), navigateToTaskDetails = {})
 }

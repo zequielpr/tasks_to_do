@@ -11,13 +11,11 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material3.AssistChip
 import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.ShapeDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -29,11 +27,12 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kunano.tasks_to_do.R
-import com.kunano.tasks_to_do.core.utils.CategoriesDropDownMenu
 import com.kunano.tasks_to_do.core.utils.Utils
+import com.kunano.tasks_to_do.core.utils.categoryAssistChip
 import com.kunano.tasks_to_do.core.utils.createCategoryDialog
 import com.kunano.tasks_to_do.core.utils.dateModifier
 import com.kunano.tasks_to_do.core.utils.showToast
+import com.kunano.tasks_to_do.tasks_list.presentation.manage_category.ManageCategoriesScreenState
 
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
@@ -43,7 +42,7 @@ fun createTaskBottomSheet(
 ) {
 
     val createTaskUiState by viewModel.createTaskUiState.collectAsStateWithLifecycle()
-    val createCategoryUiState by viewModel.createCategoryUiState.collectAsStateWithLifecycle()
+    val manageCategoriesState by viewModel.manageCategoriesScreenState.collectAsStateWithLifecycle()
     val showIntroduceTaskNameToastState by viewModel.showIntroduceTaskNameToast.collectAsStateWithLifecycle(
         initialValue = false
     )
@@ -60,7 +59,7 @@ fun createTaskBottomSheet(
 
         bottomSheetContent(
             createTaskUiState = createTaskUiState,
-            createCategoryUiState = createCategoryUiState,
+            manageCategoriesScreenState = manageCategoriesState,
             onChangeName = viewModel::onChangeName,
 
             showCategoryDropDownMenu = viewModel::showCategoryDropDownMenu,
@@ -84,7 +83,7 @@ fun createTaskBottomSheet(
 @Composable
 fun bottomSheetContent(
     createTaskUiState: CreateTaskUiState,
-    createCategoryUiState: CreateCategoryUiState,
+    manageCategoriesScreenState: ManageCategoriesScreenState,
     onChangeName: (newValue: String) -> Unit,
     showCategoryDropDownMenu: () -> Unit,
     showDatePicker: () -> Unit,
@@ -118,31 +117,18 @@ fun bottomSheetContent(
             ) {
 
                 createCategoryDialog(
-                    createCategoryUiState = createCategoryUiState,
+                    createCategoryUiState = manageCategoriesScreenState,
                     onValueChange = onCategoryNameChange,
                     onDismiss = onCategoryDialogDismiss,
                     createCategory = createCategory
                 )
-
-                CategoriesDropDownMenu(
-                    createTaskUiState.categoryList,
-                    createTaskUiState.showCategoriesDropDownMenu,
-                    onDismiss = hideDropDownMenu,
+                
+                categoryAssistChip(
+                    categoriesList = manageCategoriesScreenState.categoryList,
+                    selectedCategory = createTaskUiState.selectedCategoryInBottomSheet,
                     selectItem = selectCategory,
-                    createCategory = showCreateCategoryDialog
+                    showCreateCategoryDialog = showCreateCategoryDialog
                 )
-
-                AssistChip(
-                    shape = ShapeDefaults.Medium,
-                    onClick = showCategoryDropDownMenu,
-                    label = {
-                        Text(
-                            text = createTaskUiState.selectedCategoryInBottomSheet
-                                ?: stringResource(
-                                    id = R.string.no_category
-                                )
-                        )
-                    })
 
 
                 dateModifier(
@@ -179,7 +165,7 @@ fun datePickerPreview() {
 @Composable
 fun createTaskBottomSheetPreview() {
     bottomSheetContent(createTaskUiState = CreateTaskUiState(),
-        createCategoryUiState = CreateCategoryUiState(),
+        manageCategoriesScreenState = ManageCategoriesScreenState(),
         onChangeName = {},
         showCategoryDropDownMenu = { /*TODO*/ },
         showDatePicker = { /*TODO*/ },

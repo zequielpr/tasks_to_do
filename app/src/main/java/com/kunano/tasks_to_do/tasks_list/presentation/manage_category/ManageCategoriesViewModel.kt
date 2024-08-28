@@ -1,7 +1,6 @@
 package com.kunano.tasks_to_do.tasks_list.presentation.manage_category
 
 import androidx.lifecycle.ViewModel
-import com.kunano.tasks_to_do.tasks_list.presentation.create_task.CreateCategoryUiState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -12,19 +11,19 @@ import javax.inject.Inject
 
 data class ManageCategoriesScreenState(
     val showDeletingAlertDialog: Boolean = false,
-    val editMode: Boolean = false
+    val editMode: Boolean = false,
+    val categoryList: List<String> = listOf(),
+    val showCreateCategoryDialog: Boolean = false,
+    val categoryName: String = "",
+    val showErrorMessage: Boolean = false
 )
 
 
 @HiltViewModel
 class ManageCategoriesViewModel @Inject constructor() : ViewModel() {
-    private val _createCategoryUiState: MutableStateFlow<CreateCategoryUiState> =
-        MutableStateFlow(CreateCategoryUiState())
+
     private val _manageCategoriesScreenState: MutableStateFlow<ManageCategoriesScreenState> =
         MutableStateFlow(ManageCategoriesScreenState())
-
-    val createCategoryUiState: StateFlow<CreateCategoryUiState> =
-        _createCategoryUiState.asStateFlow()
 
 
     val manageCategoriesScreenState: StateFlow<ManageCategoriesScreenState> =
@@ -42,6 +41,24 @@ class ManageCategoriesViewModel @Inject constructor() : ViewModel() {
         setCategoryName(name = categoryId)
         showCreateOrUpdateTaskDialog()
     }
+
+
+    fun saveChanges(){
+        if (_manageCategoriesScreenState.value.categoryName.isEmpty()){
+            showErrorMessage()
+            return
+        }
+
+        if (_manageCategoriesScreenState.value.editMode){
+            //Update
+        }else{
+            //Create
+
+        }
+
+        hideErrorMessage()
+    }
+
 
     fun requestCategoryDeleting(categoryId: String){
         showDeletingAlertDialog()
@@ -63,6 +80,12 @@ class ManageCategoriesViewModel @Inject constructor() : ViewModel() {
         updateShowDeletingAlertDialog(false)
     }
 
+    private fun hideErrorMessage(){
+        updateShowErrorMessageState(show = false)
+    }
+    private fun showErrorMessage(){
+        updateShowErrorMessageState(show = true)
+    }
 
 
     private fun activateEditingMode() {
@@ -79,6 +102,7 @@ class ManageCategoriesViewModel @Inject constructor() : ViewModel() {
     }
 
     fun hideCreateOrUpdateTaskDialog() {
+        hideErrorMessage()
         setCategoryName(name = "")
         updateShowCreateOrUpdateDialog(false)
     }
@@ -89,6 +113,11 @@ class ManageCategoriesViewModel @Inject constructor() : ViewModel() {
     }
 
 
+    private fun updateShowErrorMessageState(show: Boolean){
+        _manageCategoriesScreenState.update { currentState ->
+            currentState.copy(showErrorMessage = show)
+        }
+    }
 
     private fun updateShowDeletingAlertDialog(show: Boolean) {
         _manageCategoriesScreenState.update { currentState ->
@@ -105,15 +134,17 @@ class ManageCategoriesViewModel @Inject constructor() : ViewModel() {
 
 
     private fun updateShowCreateOrUpdateDialog(show: Boolean) {
-        _createCategoryUiState.update { currentState ->
+        _manageCategoriesScreenState.update { currentState ->
             currentState.copy(showCreateCategoryDialog = show)
         }
     }
 
     private fun setCategoryName(name: String) {
 
-        _createCategoryUiState.update { currentState ->
+        _manageCategoriesScreenState.update { currentState ->
             currentState.copy(categoryName = name)
         }
     }
+
+
 }
