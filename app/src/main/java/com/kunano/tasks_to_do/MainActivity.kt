@@ -1,9 +1,16 @@
 package com.kunano.tasks_to_do
 
+import BottomNavBarRoutes
+import Route
+import android.app.Application
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.BottomAppBar
@@ -16,47 +23,57 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavBackStackEntry
+import androidx.core.view.WindowCompat
 import androidx.navigation.NavController
 import androidx.navigation.NavDestination.Companion.hierarchy
+import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
-import com.kunano.tasks_to_do.core.Routes.BottomNavBarRoutes
-import com.kunano.tasks_to_do.core.Routes.Routes
-import com.kunano.tasks_to_do.tasks_list.presentation.TaskListViewModel
+import androidx.navigation.toRoute
 import com.kunano.tasks_to_do.tasks_list.presentation.TasksListScreen
 import com.kunano.tasks_to_do.core.theme.Tasks_to_doTheme
+import com.kunano.tasks_to_do.stats.presentation.StatsScreen
+import com.kunano.tasks_to_do.tasks_list.manage_category.ManageCategoriesScreen
+import com.kunano.tasks_to_do.tasks_list.task_details.TaskDetailScreen
+import com.kunano.tasks_to_do.tasks_list.task_details.notes.NoteScreen
+import dagger.hilt.android.AndroidEntryPoint
+import dagger.hilt.android.HiltAndroidApp
 
 val graphsRoutesList = listOf(BottomNavBarRoutes.TasksList, BottomNavBarRoutes.Stats)
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        WindowCompat.setDecorFitsSystemWindows(window, false)
 
         setContent {
             Tasks_to_doTheme {
-                val scrollBehavior = BottomAppBarDefaults.exitAlwaysScrollBehavior()
+                val bottomAppBarScrollBehavior = BottomAppBarDefaults.exitAlwaysScrollBehavior()
                 val navController = rememberNavController()
                 Scaffold(
-                    bottomBar = { bottomBar(navController = navController, scrollBehavior) },
+                    bottomBar = {
+                        bottomBar(
+                            navController = navController,
+                            bottomAppBarScrollBehavior
+                        )
+                    },
                     content = { padding ->
                         navHost(
                             navController = navController,
+                            bottomAppBarScrollBehavior = bottomAppBarScrollBehavior,
                             innerPadding = padding,
-                            bottomAppBarScrollBehavior = scrollBehavior
+                            modifier = Modifier.nestedScroll(bottomAppBarScrollBehavior.nestedScrollConnection)
                         )
                     }
                 )
@@ -70,28 +87,64 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun navHost(
     navController: NavHostController,
+    bottomAppBarScrollBehavior: BottomAppBarScrollBehavior,
     innerPadding: PaddingValues,
-    bottomAppBarScrollBehavior: BottomAppBarScrollBehavior
+    modifier: Modifier
 ) {
+
+    val  enterTransition =slideInVertically(
+        initialOffsetY = { 1000 }, // Start the slide from the right
+        animationSpec = tween(durationMillis = 300) // Customize the animation speed
+    ) + fadeIn(animationSpec = tween(durationMillis = 200))
     NavHost(
+        enterTransition = { EnterTransition.None },
+        exitTransition = { ExitTransition.None },
+        popExitTransition = { ExitTransition.None },
+        popEnterTransition = {EnterTransition.None},
+        modifier = modifier,
         navController = navController,
-        startDestination = BottomNavBarRoutes.TasksList
-    ) {
+        startDestination = BottomNavBarRoutes.TasksList,
 
-        navigation<BottomNavBarRoutes.TasksList>(startDestination = Routes.TasksListScreen) {
-            composable<Routes.TasksListScreen> {
-                val viewModel = it.sharedViewModel<TaskListViewModel>(navController)
-                TasksListScreen(viewModel, innerPadding, bottomAppBarScrollBehavior)
+        ) {
+        navigation<BottomNavBarRoutes.TasksList>(startDestination = Route.TasksListScreen) {
+            composable<Route.TasksListScreen> {
+                TasksListScreen(
+                    paddingValues = innerPadding,
+                    navigate = { navigate(navController, it) }
+                )
             }
-            composable<Routes.TaskDetails> {
+            composable<Route.TaskDetails> {
+                val args = it.toRoute<Route.TaskDetails>()
+                TaskDetailScreen(
+                    taskKey = args.taskKey,
+                    contentPadding = innerPadding,
+                    bottomAppBarScrollBehavior = bottomAppBarScrollBehavior,
+                    navigate = { route -> navigate(navController, route) },
+                    navigateBack = { navigateBack(navController) })
+            }
+
+            composable<Route.ManageCategories> {
+                ManageCategoriesScreen(
+                    paddingValues = innerPadding,
+                    navigate = {},
+                    navigateBack = { navigateBack(navController) }
+                )
+            }
+
+            composable<Route.NoteScreen> {
+                NoteScreen(
+                    navigateBack = { navigateBack(navController) },
+                    paddingValues = innerPadding
+                )
             }
         }
 
-        navigation<BottomNavBarRoutes.Stats>(startDestination = Routes.StatsScreen) {
-            composable<Routes.StatsScreen> {
-
+        navigation<BottomNavBarRoutes.Stats>(startDestination = Route.StatsScreen) {
+            composable<Route.StatsScreen> {
+                StatsScreen(paddingValues = innerPadding, navigate = { /*TODO*/ })
             }
         }
+
 
     }
 
@@ -126,19 +179,16 @@ fun bottomBar(navController: NavController, scrollBehavior: BottomAppBarScrollBe
                     it.route.toString().split(".").last() == screen.route
                 } == true,
                 onClick = {
+                    println("to navigate screen: $screen")
+
                     navController.navigate(screen) {
-                        // Pop up to the start destination of the graph to
-                        // avoid building up a large stack of destinations
-                        // on the back stack as users select items
-                        popUpTo(screen) {
+                        // Pop up to the start destination to prevent stacking
+                        popUpTo(navController.graph.findStartDestination().id) {
                             saveState = true
                         }
-
-                        // Avoid multiple copies of the same destination when
-                        // reselecting the same item
-                        launchSingleTop = true
-                        // Restore state when reselecting a previously selected item
-                        restoreState = false
+                        launchSingleTop =
+                            true // Launch the destination without duplicating it in the back stack
+                        restoreState = true
                     }
                 }
             )
@@ -148,19 +198,20 @@ fun bottomBar(navController: NavController, scrollBehavior: BottomAppBarScrollBe
 }
 
 
-@Composable
-inline fun <reified T : ViewModel> NavBackStackEntry.sharedViewModel(navController: NavController): T {
-    //In cases where there is not a parent destination, it will return a view model instance
-    val navGraphRoute = destination.parent?.route ?: return viewModel()
-
-    //It ensures that the result of the lambda is remembered as long as the NavBackStackEntry is in composition
-    //thereby avoiding unnecessary recompositions
-    val parentEntry = remember(this) {
-        navController.getBackStackEntry(navGraphRoute)
+fun navigate(navController: NavController, route: Route) {
+    navController.navigate(route) {
+        // Pop up to the start destination to prevent stacking
+        popUpTo(route) {
+            saveState = true
+        }
+        launchSingleTop =
+            true // Launch the destination without duplicating it in the back stack
+        restoreState = true
     }
+}
 
-    //It returns a view model scoped to the parent entry
-    return viewModel(parentEntry)
+fun navigateBack(navController: NavController) {
+    navController.popBackStack()
 }
 
 
@@ -168,5 +219,10 @@ inline fun <reified T : ViewModel> NavBackStackEntry.sharedViewModel(navControll
 @Preview(showBackground = true)
 @Composable
 fun tasksListPreview() {
-    //TasksListScreen(TaskListViewModel(), PaddingValues(), bottomAppBarScrollBehavior = BottomAppBarScrollBehavior)
+    //TasksListScreen(PaddingValues(), bottomAppBarScrollBehavior = BottomAppBarScrollBehavior)
+}
+
+@HiltAndroidApp
+class MyApplication : Application() {
+    // You can initialize other things here if needed
 }
