@@ -24,6 +24,8 @@
     <string name="notes">Notes</string>
     <string name="note_title">Note title</string>
     <string name="note_content">Note content</string>
+    <string name="completed_tasks">Completed tasks</string>
+    <string name="pending_tasks">Pending tasks</string>
 
     <string name="select">Select</string>
     <string name="input_sub_task_name">Input subTask name</string>

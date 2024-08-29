@@ -26,7 +26,6 @@ import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AssistChip
-import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardColors
 import androidx.compose.material3.DatePicker
@@ -72,7 +71,7 @@ import androidx.compose.ui.util.fastForEach
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.PopupProperties
 import com.kunano.tasks_to_do.R
-import com.kunano.tasks_to_do.tasks_list.presentation.manage_category.ManageCategoriesScreenState
+import com.kunano.tasks_to_do.tasks_list.manage_category.ManageCategoriesScreenState
 import java.util.Calendar
 
 

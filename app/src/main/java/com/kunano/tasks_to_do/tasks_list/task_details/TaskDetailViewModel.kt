@@ -1,14 +1,11 @@
-package com.kunano.tasks_to_do.tasks_list.presentation.task_details
+package com.kunano.tasks_to_do.tasks_list.task_details
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.kunano.tasks_to_do.tasks_list.presentation.manage_category.ManageCategoriesScreenState
-import com.kunano.tasks_to_do.tasks_list.presentation.manage_category.ManageCategoriesViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.flow.updateAndGet
 import kotlinx.coroutines.launch
 import java.util.UUID
 import javax.inject.Inject

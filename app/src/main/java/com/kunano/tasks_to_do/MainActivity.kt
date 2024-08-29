@@ -8,6 +8,9 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.BottomAppBar
@@ -37,9 +40,10 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import com.kunano.tasks_to_do.tasks_list.presentation.TasksListScreen
 import com.kunano.tasks_to_do.core.theme.Tasks_to_doTheme
-import com.kunano.tasks_to_do.tasks_list.presentation.manage_category.ManageCategoriesScreen
-import com.kunano.tasks_to_do.tasks_list.presentation.task_details.TaskDetailScreen
-import com.kunano.tasks_to_do.tasks_list.presentation.task_details.notes.NoteScreen
+import com.kunano.tasks_to_do.stats.presentation.StatsScreen
+import com.kunano.tasks_to_do.tasks_list.manage_category.ManageCategoriesScreen
+import com.kunano.tasks_to_do.tasks_list.task_details.TaskDetailScreen
+import com.kunano.tasks_to_do.tasks_list.task_details.notes.NoteScreen
 import dagger.hilt.android.AndroidEntryPoint
 import dagger.hilt.android.HiltAndroidApp
 
@@ -69,7 +73,7 @@ class MainActivity : ComponentActivity() {
                             navController = navController,
                             bottomAppBarScrollBehavior = bottomAppBarScrollBehavior,
                             innerPadding = padding,
-                            modifier = Modifier//.nestedScroll(bottomAppBarScrollBehavior.nestedScrollConnection)
+                            modifier = Modifier.nestedScroll(bottomAppBarScrollBehavior.nestedScrollConnection)
                         )
                     }
                 )
@@ -87,11 +91,16 @@ fun navHost(
     innerPadding: PaddingValues,
     modifier: Modifier
 ) {
+
+    val  enterTransition =slideInVertically(
+        initialOffsetY = { 1000 }, // Start the slide from the right
+        animationSpec = tween(durationMillis = 300) // Customize the animation speed
+    ) + fadeIn(animationSpec = tween(durationMillis = 200))
     NavHost(
         enterTransition = { EnterTransition.None },
         exitTransition = { ExitTransition.None },
         popExitTransition = { ExitTransition.None },
-        popEnterTransition = { EnterTransition.None },
+        popEnterTransition = {EnterTransition.None},
         modifier = modifier,
         navController = navController,
         startDestination = BottomNavBarRoutes.TasksList,
@@ -123,11 +132,8 @@ fun navHost(
             }
 
             composable<Route.NoteScreen> {
-                val arg = it.toRoute<Route.NoteScreen>()
-                val taskKey = arg.taskKey
                 NoteScreen(
                     navigateBack = { navigateBack(navController) },
-                    taskKey = taskKey,
                     paddingValues = innerPadding
                 )
             }
@@ -135,11 +141,7 @@ fun navHost(
 
         navigation<BottomNavBarRoutes.Stats>(startDestination = Route.StatsScreen) {
             composable<Route.StatsScreen> {
-                ManageCategoriesScreen(
-                    paddingValues = innerPadding,
-                    navigate = {},
-                    navigateBack = { navigateBack(navController) }
-                )
+                StatsScreen(paddingValues = innerPadding, navigate = { /*TODO*/ })
             }
         }
 

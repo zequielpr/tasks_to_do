@@ -68,6 +68,8 @@ dependencies {
     implementation(libs.androidx.runtime.livedata)
     implementation(libs.support.annotations)
     implementation(libs.kotlin.reflect)
+    implementation(libs.androidx.annotation)
+    implementation(libs.kotlin.stdlib)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -89,6 +91,28 @@ dependencies {
     //implementation ("androidx.hilt:hilt-lifecycle-viewmodel:1.0.0-alpha03")
     kapt ("androidx.hilt:hilt-compiler:1.0.0")
     implementation(kotlin("script-runtime"))
+
+
+
+    //Room dependencies
+    val room_version = "2.6.1"
+
+    implementation("androidx.room:room-runtime:$room_version")
+    annotationProcessor("androidx.room:room-compiler:$room_version")
+
+    // To use Kotlin annotation processing tool (kapt)
+    kapt("androidx.room:room-compiler:$room_version")
+
+
+    // optional - Kotlin Extensions and Coroutines support for Room
+    implementation("androidx.room:room-ktx:$room_version")
+
+    // optional - Guava support for Room, including Optional and ListenableFuture
+    implementation("androidx.room:room-guava:$room_version")
+
+    // optional - Test helpers
+    testImplementation("androidx.room:room-testing:$room_version")
+
 }
 kapt {
     correctErrorTypes = true

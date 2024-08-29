@@ -54,13 +54,12 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.navigation.Navigation
 import androidx.navigation.compose.rememberNavController
 import com.kunano.tasks_to_do.R
 import com.kunano.tasks_to_do.core.utils.navigateBackButton
 import com.kunano.tasks_to_do.core.utils.searchBar
 import com.kunano.tasks_to_do.core.utils.sortByDialog
-import com.kunano.tasks_to_do.tasks_list.presentation.create_task.createTaskBottomSheet
+import com.kunano.tasks_to_do.tasks_list.create_task.createTaskBottomSheet
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

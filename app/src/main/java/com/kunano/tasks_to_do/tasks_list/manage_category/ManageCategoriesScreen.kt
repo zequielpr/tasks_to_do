@@ -1,4 +1,4 @@
-package com.kunano.tasks_to_do.tasks_list.presentation.manage_category
+package com.kunano.tasks_to_do.tasks_list.manage_category
 
 import Route
 import androidx.compose.foundation.layout.Arrangement

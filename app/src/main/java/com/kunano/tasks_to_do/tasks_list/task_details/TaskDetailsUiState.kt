@@ -1,4 +1,4 @@
-package com.kunano.tasks_to_do.tasks_list.presentation.task_details
+package com.kunano.tasks_to_do.tasks_list.task_details
 
 import com.kunano.tasks_to_do.R
 import com.kunano.tasks_to_do.core.utils.Utils

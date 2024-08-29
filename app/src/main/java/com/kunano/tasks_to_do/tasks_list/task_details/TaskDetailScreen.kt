@@ -1,4 +1,4 @@
-package com.kunano.tasks_to_do.tasks_list.presentation.task_details
+package com.kunano.tasks_to_do.tasks_list.task_details
 
 import Route
 import androidx.compose.foundation.clickable
@@ -60,8 +60,8 @@ import com.kunano.tasks_to_do.core.utils.customBasicTextField
 import com.kunano.tasks_to_do.core.utils.datePicker
 import com.kunano.tasks_to_do.core.utils.dialTimePicker
 import com.kunano.tasks_to_do.core.utils.navigateBackButton
-import com.kunano.tasks_to_do.tasks_list.presentation.manage_category.ManageCategoriesScreenState
-import com.kunano.tasks_to_do.tasks_list.presentation.manage_category.ManageCategoriesViewModel
+import com.kunano.tasks_to_do.tasks_list.manage_category.ManageCategoriesScreenState
+import com.kunano.tasks_to_do.tasks_list.manage_category.ManageCategoriesViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

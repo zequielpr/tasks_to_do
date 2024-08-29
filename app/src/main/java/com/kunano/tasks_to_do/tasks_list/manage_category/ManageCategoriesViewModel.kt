@@ -1,4 +1,4 @@
-package com.kunano.tasks_to_do.tasks_list.presentation.manage_category
+package com.kunano.tasks_to_do.tasks_list.manage_category
 
 import androidx.lifecycle.ViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel

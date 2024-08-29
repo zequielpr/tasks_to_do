@@ -1,4 +1,4 @@
-package com.kunano.tasks_to_do.tasks_list.presentation.create_task
+package com.kunano.tasks_to_do.tasks_list.create_task
 
 import android.os.Build
 import androidx.annotation.RequiresApi
@@ -32,7 +32,7 @@ import com.kunano.tasks_to_do.core.utils.categoryAssistChip
 import com.kunano.tasks_to_do.core.utils.createCategoryDialog
 import com.kunano.tasks_to_do.core.utils.dateModifier
 import com.kunano.tasks_to_do.core.utils.showToast
-import com.kunano.tasks_to_do.tasks_list.presentation.manage_category.ManageCategoriesScreenState
+import com.kunano.tasks_to_do.tasks_list.manage_category.ManageCategoriesScreenState
 
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
