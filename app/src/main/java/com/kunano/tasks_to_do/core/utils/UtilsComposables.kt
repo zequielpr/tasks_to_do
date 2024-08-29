@@ -71,6 +71,7 @@ import androidx.compose.ui.util.fastForEach
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.PopupProperties
 import com.kunano.tasks_to_do.R
+import com.kunano.tasks_to_do.core.data.model.entities.LocalCategoryEntity
 import com.kunano.tasks_to_do.tasks_list.manage_category.ManageCategoriesScreenState
 import java.util.Calendar
 
@@ -175,10 +176,10 @@ fun datePicker(
 
 @Composable
 fun categoryAssistChip(
-    categoriesList: List<String>,
+    categoriesList: List<LocalCategoryEntity>,
     trailingIcon: (ImageVector)? = null,
-    selectedCategory: String?,
-    selectItem: (category: String?) -> Unit,
+    selectedCategoryName: String?,
+    selectItem: (categoryId: Int?) -> Unit,
     showCreateCategoryDialog: () -> Unit
 ) {
     var menuExpanded by remember {
@@ -204,7 +205,7 @@ fun categoryAssistChip(
             onClick = { menuExpanded = true },
             label = {
                 Text(
-                    text = selectedCategory
+                    text = selectedCategoryName
                         ?: stringResource(
                             id = R.string.no_category
                         )
@@ -216,10 +217,10 @@ fun categoryAssistChip(
 
 @Composable
 fun CategoriesDropDownMenu(
-    itemsList: List<String>,
+    itemsList: List<LocalCategoryEntity>,
     menuExpanded: Boolean,
     onDismiss: () -> Unit,
-    selectItem: (category: String?) -> Unit,
+    selectItem: (categoryId: Int?) -> Unit,
     createCategory: () -> Unit
 ) {
     DropdownMenu(
@@ -242,8 +243,8 @@ fun CategoriesDropDownMenu(
             })
 
         itemsList.fastForEach {
-            DropdownMenuItem(text = { Text(text = it) }, onClick = {
-                selectItem(it)
+            DropdownMenuItem(text = { Text(text = it.categoryName) }, onClick = {
+                selectItem(it.categoryId)
                 onDismiss()
 
             })

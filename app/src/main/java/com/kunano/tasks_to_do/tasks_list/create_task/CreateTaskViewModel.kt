@@ -38,9 +38,7 @@ class CreateTaskViewModel @Inject constructor(): ViewModel() {
     )
 
     init {
-        _manageCategoriesScreenState.update { currentState ->
-            currentState.copy(categoryList =  categoriesList)
-        }
+
     }
 
 
@@ -135,8 +133,8 @@ class CreateTaskViewModel @Inject constructor(): ViewModel() {
     }
 
 
-    fun selectTaskCategory(category: String?) {
-        updateSelectedCategory(category = category)
+    fun selectTaskCategory(category: Int?) {
+        //updateSelectedCategory(category = category)
     }
 
     fun onChangeName(newValue: String) {

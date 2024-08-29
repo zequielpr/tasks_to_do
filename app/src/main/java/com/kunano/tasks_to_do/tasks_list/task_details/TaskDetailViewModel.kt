@@ -58,7 +58,7 @@ class TaskDetailViewModel @Inject constructor() :
         updateSubTaskInput(input = value, subTaskId = subTaskInputState.subTaskId)
     }
 
-    fun setTaskCategory(category: String?) {
+    fun setTaskCategory(category: Int?) {
         println("category: $category")
     }
 

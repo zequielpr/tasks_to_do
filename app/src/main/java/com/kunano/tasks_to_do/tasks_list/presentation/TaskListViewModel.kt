@@ -3,13 +3,21 @@ package com.kunano.tasks_to_do.tasks_list.presentation
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.kunano.tasks_to_do.core.data.SubTaskRepository
+import com.kunano.tasks_to_do.core.data.TaskRepository
+import com.kunano.tasks_to_do.core.data.model.entities.LocalTaskEntity
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class TaskListViewModel @Inject constructor() : ViewModel() {
+class TaskListViewModel @Inject constructor(private val taskRepository: TaskRepository) :
+    ViewModel() {
 
     //Intern updates
     private val _tasksListScreenUiState = MutableStateFlow(TasksListScreenUiState())
@@ -36,14 +44,18 @@ class TaskListViewModel @Inject constructor() : ViewModel() {
         )
     )
 
+
     init {
+        viewModelScope.launch {
+            taskRepository.getTasksList().collect {
+                updateTasksList(it)
+            }
+        }
         val tasksList = arrayListOf<String>()
         val catList = arrayListOf<String>()
         for (i in 100..200) {
             tasksList.add("Task $i")
         }
-        updateTasksList(tasksList)
-
 
         for (i in 3..7) {
             catList.add("category$i")
@@ -53,16 +65,18 @@ class TaskListViewModel @Inject constructor() : ViewModel() {
 
     }
 
-    fun selectSortByOption(option: Int){
+
+    fun selectSortByOption(option: Int) {
         updateSortBySelectedOption(option = option)
         hideSortByDialog()
     }
 
-    fun showSortByDialog(){
+    fun showSortByDialog() {
         updateShowSortByDialogState(show = true)
 
     }
-    fun hideSortByDialog(){
+
+    fun hideSortByDialog() {
         updateShowSortByDialogState(show = false)
     }
 
@@ -103,7 +117,7 @@ class TaskListViewModel @Inject constructor() : ViewModel() {
     }
 
 
-    private fun updateShowSortByDialogState(show: Boolean){
+    private fun updateShowSortByDialogState(show: Boolean) {
         _tasksListScreenUiState.update { currentState ->
             currentState.copy(showSortByDialog = show)
         }
@@ -142,7 +156,7 @@ class TaskListViewModel @Inject constructor() : ViewModel() {
         }
     }
 
-    private fun updateTasksList(tasksList: List<String>) {
+    private fun updateTasksList(tasksList: List<LocalTaskEntity>) {
         _tasksListScreenUiState.update { currentState ->
             currentState.copy(tasksList = tasksList)
         }

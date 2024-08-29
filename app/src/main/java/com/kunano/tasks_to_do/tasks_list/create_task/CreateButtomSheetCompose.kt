@@ -33,16 +33,19 @@ import com.kunano.tasks_to_do.core.utils.createCategoryDialog
 import com.kunano.tasks_to_do.core.utils.dateModifier
 import com.kunano.tasks_to_do.core.utils.showToast
 import com.kunano.tasks_to_do.tasks_list.manage_category.ManageCategoriesScreenState
+import com.kunano.tasks_to_do.tasks_list.manage_category.ManageCategoriesViewModel
 
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun createTaskBottomSheet(
-    onDismiss: () -> Unit, viewModel: CreateTaskViewModel = hiltViewModel()
+    onDismiss: () -> Unit,
+    viewModel: CreateTaskViewModel = hiltViewModel(),
+    manageCategoriesViewModel: ManageCategoriesViewModel = hiltViewModel()
 ) {
 
     val createTaskUiState by viewModel.createTaskUiState.collectAsStateWithLifecycle()
-    val manageCategoriesState by viewModel.manageCategoriesScreenState.collectAsStateWithLifecycle()
+    val manageCategoriesState by manageCategoriesViewModel.manageCategoriesScreenState.collectAsStateWithLifecycle()
     val showIntroduceTaskNameToastState by viewModel.showIntroduceTaskNameToast.collectAsStateWithLifecycle(
         initialValue = false
     )
@@ -69,10 +72,10 @@ fun createTaskBottomSheet(
             hideDropDownMenu = viewModel::hideCategoryDropDownMenu,
             selectCategory = viewModel::selectTaskCategory,
             createTask = viewModel::createTask,
-            onCategoryNameChange = viewModel::onCategoryNameChange,
-            showCreateCategoryDialog = viewModel::showCreateCategoryDialog,
-            onCategoryDialogDismiss = viewModel::hideCreateCategoryDialog,
-            createCategory = viewModel::createCategory,
+            onCategoryNameChange = manageCategoriesViewModel::onChangeCategoryName,
+            showCreateCategoryDialog = manageCategoriesViewModel::showCreateOrUpdateTaskDialog,
+            onCategoryDialogDismiss = manageCategoriesViewModel::hideCreateOrUpdateTaskDialog,
+            createCategory = manageCategoriesViewModel::saveChanges,
 
             )
     }
@@ -90,7 +93,7 @@ fun bottomSheetContent(
     hideDatePicker: () -> Unit,
     setDate: (dateInMilli: Long?) -> Unit,
     hideDropDownMenu: () -> Unit,
-    selectCategory: (category: String?) -> Unit,
+    selectCategory: (category: Int?) -> Unit,
     createTask: () -> Unit,
     onCategoryNameChange: (category: String) -> Unit,
     showCreateCategoryDialog: () -> Unit,
@@ -122,10 +125,10 @@ fun bottomSheetContent(
                     onDismiss = onCategoryDialogDismiss,
                     createCategory = createCategory
                 )
-                
+
                 categoryAssistChip(
                     categoriesList = manageCategoriesScreenState.categoryList,
-                    selectedCategory = createTaskUiState.selectedCategoryInBottomSheet,
+                    selectedCategoryName = null,
                     selectItem = selectCategory,
                     showCreateCategoryDialog = showCreateCategoryDialog
                 )

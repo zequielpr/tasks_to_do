@@ -56,6 +56,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.compose.rememberNavController
 import com.kunano.tasks_to_do.R
+import com.kunano.tasks_to_do.core.data.model.entities.LocalTaskEntity
 import com.kunano.tasks_to_do.core.utils.navigateBackButton
 import com.kunano.tasks_to_do.core.utils.searchBar
 import com.kunano.tasks_to_do.core.utils.sortByDialog
@@ -207,7 +208,7 @@ fun TaskCategoryCarousel(
         if (tasksListScreenUiState.tasksList.isNotEmpty()) {
             items(tasksListScreenUiState.tasksList) { categoryLabel ->
                 categoryBtn(
-                    label = categoryLabel,
+                    label = "categoryLabel",
                     selectedCategory = tasksListScreenUiState.selectedCategory,
                     selectCategory = filter
                 )
@@ -284,7 +285,7 @@ fun floatingActionButton(
 @Composable
 fun taskListContent(
     innerPadding: PaddingValues,
-    tasksList: List<String>,
+    tasksList: List<LocalTaskEntity>,
     navigateToTaskDetails: (taskId: String) -> Unit
 ) {
 
@@ -298,8 +299,8 @@ fun taskListContent(
         verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
 
-        items(tasksList) { taskName: String ->
-            taskCard(taskName = taskName, navigateToTaskDetails)
+        items(tasksList) { task ->
+            taskCard(taskName = task.taskTitle, navigateToTaskDetails)
         }
         item {
             Box(modifier = Modifier.height(20.dp))

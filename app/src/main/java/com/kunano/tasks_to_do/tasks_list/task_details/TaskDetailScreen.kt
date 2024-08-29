@@ -157,7 +157,7 @@ fun taskDetailTopAppBar(
     manageCategoriesScreenState: ManageCategoriesScreenState,
     navigateBack: () -> Unit,
     selectAction: (action: Int) -> Unit,
-    setCategory: (category: String?) -> Unit,
+    setCategory: (category: Int?) -> Unit,
     showCreateCategoryDialog: () -> Unit
 
 ) {
@@ -166,7 +166,7 @@ fun taskDetailTopAppBar(
         title = {
             categoryAssistChip(
                 categoriesList = manageCategoriesScreenState.categoryList,
-                selectedCategory = taskDetailsUiState.category,
+                selectedCategoryName = null,
                 trailingIcon = Icons.Filled.ArrowDropDown,
                 selectItem = setCategory,
                 showCreateCategoryDialog = showCreateCategoryDialog

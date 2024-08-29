@@ -15,7 +15,7 @@ import androidx.room.PrimaryKey
     )]
 )
 data class LocalSubTaskEntity(
-    @PrimaryKey var subTaskId: String,
-    var taskIdFk: String,
+    @PrimaryKey(autoGenerate = true) var subTaskId: Int,
+    var taskIdFk: Int,
     var isCompleted: Boolean
 )
