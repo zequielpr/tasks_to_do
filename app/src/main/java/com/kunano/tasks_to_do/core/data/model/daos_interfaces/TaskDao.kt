@@ -15,13 +15,13 @@ interface TaskDao {
     fun getAll(): Flow<List<LocalTaskEntity>>
 
     @Query("SELECT * FROM task_table WHERE taskId IN (:taskId)")
-    fun getTaskById(taskId: Int): Flow<LocalTaskEntity>
+    suspend fun getTaskById(taskId: Long): LocalTaskEntity
 
     @Update
     suspend fun updateTask(taskEntity: LocalTaskEntity)
 
     @Insert
-    suspend fun insertTask(taskEntity: LocalTaskEntity)
+    suspend fun insertTask(taskEntity: LocalTaskEntity): Long
 
     @Delete
     suspend fun deleteTask(taskEntity: LocalTaskEntity)

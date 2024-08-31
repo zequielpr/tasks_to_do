@@ -7,7 +7,6 @@ import com.kunano.tasks_to_do.core.data.source.LocalDataSource.Companion.getData
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -16,16 +15,20 @@ import javax.inject.Singleton
 class CategoryRepository @Inject constructor(@ApplicationContext context: Context) {
     private val categoryDao: CategoryDao =  getDataBaseInstance(context)!!.CategoryDao()
 
-    suspend fun insertCategory(categoryEntity: LocalCategoryEntity) {
+    suspend fun insertAndReturnCategory(categoryEntity: LocalCategoryEntity): LocalCategoryEntity? {
         return withContext(Dispatchers.IO){
-            joinAll()
-            categoryDao.insertCategory(categoryEntity)
+             val categoryId = categoryDao.insertCategory(categoryEntity)
+            getCategoryById(categoryId)
         }
     }
 
 
     fun getAll(): Flow<List<LocalCategoryEntity>>{
         return categoryDao.getAll()
+    }
+
+    suspend fun getCategoryById(categoryId: Long): LocalCategoryEntity{
+       return categoryDao.getCategoryById(categoryId)
     }
 
 

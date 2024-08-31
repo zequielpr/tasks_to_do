@@ -1,9 +1,13 @@
 package com.kunano.tasks_to_do.tasks_list.presentation
 
+import Route
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.navigation.NavController
+import androidx.navigation.toRoute
 import com.kunano.tasks_to_do.core.data.SubTaskRepository
 import com.kunano.tasks_to_do.core.data.TaskRepository
 import com.kunano.tasks_to_do.core.data.model.entities.LocalTaskEntity
@@ -16,7 +20,9 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class TaskListViewModel @Inject constructor(private val taskRepository: TaskRepository) :
+class TaskListViewModel @Inject constructor(
+    private val taskRepository: TaskRepository,
+) :
     ViewModel() {
 
     //Intern updates
@@ -26,23 +32,7 @@ class TaskListViewModel @Inject constructor(private val taskRepository: TaskRepo
     val tasksListScreedUiState = _tasksListScreenUiState
 
 
-    //Internal updates
-    private var _testData: MutableLiveData<List<String>> = MutableLiveData(listOf())
 
-    //Read only
-    val tasksList: LiveData<List<String>> get() = _testData
-
-
-    var categoriesList: MutableLiveData<List<String>> = MutableLiveData(
-        listOf(
-            "category 1",
-            "Task 2",
-            "category 3",
-            "Task 4",
-            "category 5",
-            "Task 6",
-        )
-    )
 
 
     init {

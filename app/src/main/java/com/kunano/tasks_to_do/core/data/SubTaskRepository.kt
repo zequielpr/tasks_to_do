@@ -36,8 +36,8 @@ class SubTaskRepository @Inject constructor(@ApplicationContext val context: Con
         }
     }
 
-    suspend fun getSubTaskLIst(taskId: Int) {
-        withContext(Dispatchers.IO){
+    suspend fun getSubTaskLIst(taskId: Long): List<LocalSubTaskEntity> {
+        return withContext(Dispatchers.IO){
             subTaskDao.getAll(taskId = taskId)
         }
     }

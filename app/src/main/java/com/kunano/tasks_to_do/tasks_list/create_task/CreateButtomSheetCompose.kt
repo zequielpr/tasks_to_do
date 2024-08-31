@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kunano.tasks_to_do.R
+import com.kunano.tasks_to_do.core.data.model.entities.LocalCategoryEntity
 import com.kunano.tasks_to_do.core.utils.Utils
 import com.kunano.tasks_to_do.core.utils.categoryAssistChip
 import com.kunano.tasks_to_do.core.utils.createCategoryDialog
@@ -49,6 +50,10 @@ fun createTaskBottomSheet(
     val showIntroduceTaskNameToastState by viewModel.showIntroduceTaskNameToast.collectAsStateWithLifecycle(
         initialValue = false
     )
+
+    manageCategoriesViewModel.newCategoryReceiver = {
+        viewModel.selectTaskCategory(it)
+    }
 
     val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
@@ -93,7 +98,7 @@ fun bottomSheetContent(
     hideDatePicker: () -> Unit,
     setDate: (dateInMilli: Long?) -> Unit,
     hideDropDownMenu: () -> Unit,
-    selectCategory: (category: Int?) -> Unit,
+    selectCategory: (category: LocalCategoryEntity?) -> Unit,
     createTask: () -> Unit,
     onCategoryNameChange: (category: String) -> Unit,
     showCreateCategoryDialog: () -> Unit,
@@ -128,7 +133,7 @@ fun bottomSheetContent(
 
                 categoryAssistChip(
                     categoriesList = manageCategoriesScreenState.categoryList,
-                    selectedCategoryName = null,
+                    selectedCategoryName = createTaskUiState.selectedCategoryInBottomSheet?.categoryName,
                     selectItem = selectCategory,
                     showCreateCategoryDialog = showCreateCategoryDialog
                 )

@@ -20,6 +20,7 @@ import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.sharp.Clear
 import androidx.compose.material.icons.sharp.Menu
+import androidx.compose.material3.BottomAppBarDefaults
 import androidx.compose.material3.BottomAppBarScrollBehavior
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -42,10 +43,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -53,6 +56,8 @@ import androidx.compose.ui.util.fastForEach
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kunano.tasks_to_do.R
+import com.kunano.tasks_to_do.core.data.model.entities.LocalCategoryEntity
+import com.kunano.tasks_to_do.core.data.model.entities.LocalSubTaskEntity
 import com.kunano.tasks_to_do.core.utils.basicDropDownMenu
 import com.kunano.tasks_to_do.core.utils.categoryAssistChip
 import com.kunano.tasks_to_do.core.utils.createCategoryDialog
@@ -66,7 +71,6 @@ import com.kunano.tasks_to_do.tasks_list.manage_category.ManageCategoriesViewMod
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TaskDetailScreen(
-    taskKey: String,
     contentPadding: PaddingValues,
     bottomAppBarScrollBehavior: BottomAppBarScrollBehavior,
     navigate: (route: Route) -> Unit,
@@ -75,9 +79,14 @@ fun TaskDetailScreen(
     manageCategoriesViewModel: ManageCategoriesViewModel = hiltViewModel(),
     modifier: Modifier = Modifier
 ) {
+    val taskKey = viewModel.taskKey
     val taskDetailsUiState by viewModel.taskDetail.collectAsStateWithLifecycle()
     val manageCategoriesScreenState by manageCategoriesViewModel.manageCategoriesScreenState.collectAsStateWithLifecycle()
 
+    //Set the the recently created category
+    manageCategoriesViewModel.newCategoryReceiver = {
+        viewModel.updateTaskCategory(it)
+    }
 
     val topAppBarScrollBehavior =
         TopAppBarDefaults.enterAlwaysScrollBehavior(rememberTopAppBarState())
@@ -92,20 +101,23 @@ fun TaskDetailScreen(
             manageCategoriesScreenState = manageCategoriesScreenState,
             navigateBack = navigateBack,
             selectAction = viewModel::selectDropDownMenuAction,
-            setCategory = viewModel::setTaskCategory,
-            showCreateCategoryDialog = manageCategoriesViewModel::showAddAcategoryDialog
+            setCategory = viewModel::updateTaskCategory,
+            showCreateCategoryDialog = manageCategoriesViewModel::showAddCategoryDialog
         )
         LazyColumn(
             modifier = modifier
+                .padding(20.dp, 0.dp)
                 .nestedScroll(bottomAppBarScrollBehavior.nestedScrollConnection)
                 .nestedScroll(topAppBarScrollBehavior.nestedScrollConnection)
         ) {
             item {
-                Text(
-                    modifier = Modifier.padding(20.dp, 0.dp),
-                    text = "taskTitle",
-                    style = TextStyle(fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                customBasicTextField(
+                    modifier = modifier,
+                    value = taskDetailsUiState.taskTitle,
+                    hint = R.string.task_details,
+                    onValueChange = viewModel::updateTaskTitle
                 )
+
 
 
                 taskDetailBody(
@@ -117,7 +129,7 @@ fun TaskDetailScreen(
                     onTyping = viewModel::onSubTaskInputChanges,
                     pickDueDate = viewModel::showDatePicker,
                     setReminder = viewModel::showTimePicker,
-                    editNotes = { navigate(Route.NoteScreen(taskKey = taskKey))}
+                    editNotes = { navigate(Route.NoteScreen(taskKey = taskKey)) }
                 )
             }
         }
@@ -137,10 +149,11 @@ fun TaskDetailScreen(
             datePicker(
                 selectedDate = taskDetailsUiState.dueDate,
                 onDismiss = viewModel::hideDatePicker,
-                pickDate = viewModel::setDueDate)
+                pickDate = viewModel::setDueDate
+            )
         }
 
-        if (taskDetailsUiState.showTimePicker){
+        if (taskDetailsUiState.showTimePicker) {
             dialTimePicker(onConfirm = {}, onDismiss = viewModel::hideTimePicker)
         }
 
@@ -157,7 +170,7 @@ fun taskDetailTopAppBar(
     manageCategoriesScreenState: ManageCategoriesScreenState,
     navigateBack: () -> Unit,
     selectAction: (action: Int) -> Unit,
-    setCategory: (category: Int?) -> Unit,
+    setCategory: (category: LocalCategoryEntity?) -> Unit,
     showCreateCategoryDialog: () -> Unit
 
 ) {
@@ -166,7 +179,7 @@ fun taskDetailTopAppBar(
         title = {
             categoryAssistChip(
                 categoriesList = manageCategoriesScreenState.categoryList,
-                selectedCategoryName = null,
+                selectedCategoryName = taskDetailsUiState.category,
                 trailingIcon = Icons.Filled.ArrowDropDown,
                 selectItem = setCategory,
                 showCreateCategoryDialog = showCreateCategoryDialog
@@ -185,20 +198,20 @@ fun taskDetailTopAppBar(
 fun taskDetailBody(
     contentPadding: PaddingValues,
     taskDetailsUiState: TaskDetailsUiState,
-    subTaskCheckBoxOnClick: (subTaskId: String, state: Boolean) -> Unit,
-    deleteSubTask: (subTaskInputState: SubTaskInputState) -> Unit,
+    subTaskCheckBoxOnClick: (subTask: LocalSubTaskEntity, state: Boolean) -> Unit,
+    deleteSubTask: (subTask: LocalSubTaskEntity) -> Unit,
     addSubTask: () -> Unit,
     pickDueDate: () -> Unit,
     setReminder: () -> Unit,
     editNotes: () -> Unit,
-    onTyping: (subTaskInputState: SubTaskInputState, value: String) -> Unit,
+    onTyping: (subTask: LocalSubTaskEntity, value: String) -> Unit,
     modifier: Modifier = Modifier.padding(contentPadding)
 ) {
 
     Box(
         modifier = modifier
     ) {
-        Column(modifier = Modifier.padding(20.dp, 0.dp)) {
+        Column {
             subTasks(
                 taskDetailsUiState = taskDetailsUiState,
                 subTaskCheckBoxOnClick = subTaskCheckBoxOnClick,
@@ -219,22 +232,22 @@ fun taskDetailBody(
 @Composable
 fun subTasks(
     taskDetailsUiState: TaskDetailsUiState,
-    subTaskCheckBoxOnClick: (subTaskId: String, state: Boolean) -> Unit,
-    deleteSubTask: (subTaskInputState: SubTaskInputState) -> Unit,
+    subTaskCheckBoxOnClick: (subTask: LocalSubTaskEntity, state: Boolean) -> Unit,
+    deleteSubTask: (subTask: LocalSubTaskEntity) -> Unit,
     addSubTask: () -> Unit,
-    onTyping: (subTaskInputState: SubTaskInputState, value: String) -> Unit,
+    onTyping: (subTask: LocalSubTaskEntity, value: String) -> Unit,
     modifier: Modifier = Modifier
         .padding(0.dp, 10.dp)
         .fillMaxWidth()
 ) {
     Column {
         var index = 0
-        taskDetailsUiState.subTasksInputInputState.toList().fastForEach {
+        taskDetailsUiState.subTasksInputInputState.fastForEach {
             key(it.subTaskId) {
                 println("sub task's input: $index")
                 index++
                 subTaskCard(
-                    subTaskInputState = it,
+                    subTask = it,
                     isTheLastItem = index == taskDetailsUiState.subTasksInputInputState.size, //Focus the last item
                     subTaskCheckBoxOnClick = subTaskCheckBoxOnClick,
                     deleteSubTask = deleteSubTask,
@@ -243,38 +256,6 @@ fun subTasks(
             }
 
         }
-        taskDetailsUiState.subTasks.fastForEach {
-            /* subTaskCard(
-                subTask = it,
-                 isTheLastItem = false,
-                 markSubtaskAsDone = {},
-                 deleteSubTask = {},
-                 onTyping = onTyping
-             )*/
-        }
-        /*Card(shape = RoundedCornerShape(20.dp)) {
-            LazyColumn(
-                modifier = Modifier
-                    .heightIn(max = 190.dp, min = 0.dp)
-                    .padding(15.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                items(taskDetailsUiState.subTasksInput) {
-                    subTaskCard(
-                        subtaskName = "sub $it", isSubTaskDone = false,
-                        markSubtaskAsDone = markSubtaskAsDone, deleteSubTask = deleteSubTask
-                    )
-                }
-
-                items(0) {
-                    subTaskCard(
-                        subtaskName = "sub $it", isSubTaskDone = false,
-                        markSubtaskAsDone = markSubtaskAsDone, deleteSubTask = deleteSubTask
-                    )
-                }
-            }
-        }*/
-
 
         Box(modifier = modifier.fillMaxWidth()) {
             Row(
@@ -304,11 +285,11 @@ fun subTasks(
 
 @Composable
 fun subTaskCard(
-    subTaskInputState: SubTaskInputState,
+    subTask: LocalSubTaskEntity,
     isTheLastItem: Boolean,
-    subTaskCheckBoxOnClick: (subTaskId: String, state: Boolean) -> Unit,
-    deleteSubTask: (subTaskInputState: SubTaskInputState) -> Unit,
-    onTyping: (subTaskInputState: SubTaskInputState, value: String) -> Unit,
+    subTaskCheckBoxOnClick: (subTask: LocalSubTaskEntity, state: Boolean) -> Unit,
+    deleteSubTask: (subTask: LocalSubTaskEntity) -> Unit,
+    onTyping: (subTask: LocalSubTaskEntity, value: String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val mutableInteractionSource by remember { mutableStateOf(MutableInteractionSource()) }
@@ -320,23 +301,28 @@ fun subTaskCard(
     //Focus on the last item
 
     val isTextFieldFocused by mutableInteractionSource.collectIsFocusedAsState()
+    val textStyle = if (subTask.isCompleted) TextStyle(
+        textDecoration = TextDecoration.LineThrough,
+        color = Color.Gray
+    ) else null
 
     Row(verticalAlignment = Alignment.CenterVertically) {
         Checkbox(
-            checked = subTaskInputState.isSubTaskDone,
-            onCheckedChange = { subTaskCheckBoxOnClick(subTaskInputState.subTaskId, it) })
+            checked = subTask.isCompleted,
+            onCheckedChange = { subTaskCheckBoxOnClick(subTask, it) })
 
         customBasicTextField(
+            textStyle = textStyle,
             modifier = modifier
                 .weight(1f)
                 .focusRequester(focusRequester),
             mutableInteractionSource = mutableInteractionSource,
-            value = subTaskInputState.subTaskName ?: "",
+            value = subTask.title ?: "",
             hint = R.string.input_sub_task_name,
-            onValueChange = { onTyping(subTaskInputState, it) })
+            onValueChange = { onTyping(subTask, it) })
 
         IconButton(
-            onClick = { deleteSubTask(subTaskInputState) },
+            onClick = { deleteSubTask(subTask) },
             enabled = isTextFieldFocused
         ) {
             if (isTextFieldFocused) {
@@ -417,13 +403,5 @@ fun taskBodyPreview() {
     )
 }
 
-
-@Preview(showBackground = true)
-@Composable
-fun taskFeaturesPreview() {
-    taskFeatures(taskDetailsUiState = TaskDetailsUiState(), setReminder = {},
-        pickDueDate = {},
-        editNotes = {})
-}
 
 

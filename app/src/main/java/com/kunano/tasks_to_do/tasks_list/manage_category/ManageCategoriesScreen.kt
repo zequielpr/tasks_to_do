@@ -72,7 +72,7 @@ fun ManageCategoriesScreen(
                 scrollBehavior = scrollBehavior,
                 navigationIcon = { navigateBackButton(navigateBack = navigateBack) },
                 actions = {
-                    IconButton(onClick = viewModel::showAddAcategoryDialog) {
+                    IconButton(onClick = viewModel::showAddCategoryDialog) {
                         Icon(Icons.Default.Add, contentDescription = null)
                     }
                 },

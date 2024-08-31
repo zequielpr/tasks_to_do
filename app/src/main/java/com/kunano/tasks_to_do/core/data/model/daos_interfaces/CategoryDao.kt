@@ -14,11 +14,14 @@ interface CategoryDao {
     @Query("SELECT * FROM localcategoryentity")
     fun getAll(): Flow<List<LocalCategoryEntity>>
 
+    @Query("SELECT * FROM localcategoryentity WHERE categoryId in (:categoryId)")
+    suspend fun getCategoryById(categoryId: Long): LocalCategoryEntity
+
     @Update
     suspend fun updateCategory(categoryEntity: LocalCategoryEntity)
 
     @Insert
-    suspend fun insertCategory(categoryEntity: LocalCategoryEntity)
+    suspend fun insertCategory(categoryEntity: LocalCategoryEntity): Long
 
     @Delete
     suspend fun deleteCategory(categoryEntity: LocalCategoryEntity)

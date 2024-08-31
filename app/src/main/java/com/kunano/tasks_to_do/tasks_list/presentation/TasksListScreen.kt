@@ -286,7 +286,7 @@ fun floatingActionButton(
 fun taskListContent(
     innerPadding: PaddingValues,
     tasksList: List<LocalTaskEntity>,
-    navigateToTaskDetails: (taskId: String) -> Unit
+    navigateToTaskDetails: (taskId: Long) -> Unit
 ) {
 
 
@@ -300,7 +300,7 @@ fun taskListContent(
     ) {
 
         items(tasksList) { task ->
-            taskCard(taskName = task.taskTitle, navigateToTaskDetails)
+            taskCard(task = task, navigateToTaskDetails)
         }
         item {
             Box(modifier = Modifier.height(20.dp))
@@ -311,17 +311,17 @@ fun taskListContent(
 
 
 @Composable
-fun taskCard(taskName: String, navigateToTaskDetails: (taskId: String) -> Unit) {
+fun taskCard(task: LocalTaskEntity, navigateToTaskDetails: (taskId: Long) -> Unit) {
     var taskState by rememberSaveable { mutableStateOf(false) }
     Card(modifier = Modifier
         .fillMaxWidth()
-        .clickable { navigateToTaskDetails(taskName) }) {
+        .clickable { navigateToTaskDetails(task.taskId!!) }) {
         Row {
             Checkbox(checked = taskState, onCheckedChange = { state -> taskState = state })
             Text(
                 textDecoration = if (taskState) TextDecoration.LineThrough else null,
                 modifier = Modifier.padding(14.dp),
-                text = taskName
+                text = task.taskTitle
             )
         }
     }

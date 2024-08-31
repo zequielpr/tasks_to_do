@@ -20,7 +20,7 @@ class TaskRepository @Inject constructor(
 
 
     //Move the coroutine to the IO thread
-    suspend fun getTask(taskId: Int): Flow<LocalTaskEntity> {
+    suspend fun getTask(taskId: Long): LocalTaskEntity {
         return _taskDao.getTaskById(taskId = taskId)
 
     }
@@ -30,9 +30,9 @@ class TaskRepository @Inject constructor(
     }
 
 
-    suspend fun insertTask(taskEntity: LocalTaskEntity) {
+    suspend fun insertTask(taskEntity: LocalTaskEntity): Boolean {
         return withContext(Dispatchers.IO) {
-            _taskDao.insertTask(taskEntity)
+            _taskDao.insertTask(taskEntity) > 0
         }
     }
 

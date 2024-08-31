@@ -1,7 +1,15 @@
 package com.kunano.tasks_to_do.tasks_list.task_details
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.navigation.toRoute
+import com.kunano.tasks_to_do.core.data.CategoryRepository
+import com.kunano.tasks_to_do.core.data.SubTaskRepository
+import com.kunano.tasks_to_do.core.data.TaskRepository
+import com.kunano.tasks_to_do.core.data.model.entities.LocalCategoryEntity
+import com.kunano.tasks_to_do.core.data.model.entities.LocalSubTaskEntity
+import com.kunano.tasks_to_do.core.data.model.entities.LocalTaskEntity
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -11,55 +19,142 @@ import java.util.UUID
 import javax.inject.Inject
 
 @HiltViewModel
-class TaskDetailViewModel @Inject constructor() :
+class TaskDetailViewModel @Inject constructor(
+    private val savedStateHandle: SavedStateHandle,
+    private val taskRepository: TaskRepository,
+    private val categoryRepository: CategoryRepository,
+    private val subTaskRepository: SubTaskRepository
+) :
     ViewModel() {
+
+    val taskKey: Long = savedStateHandle.toRoute<Route.TaskDetails>().taskKey
     private val _taskDetailUiState: MutableStateFlow<TaskDetailsUiState> =
         MutableStateFlow(TaskDetailsUiState())
 
     val taskDetail: StateFlow<TaskDetailsUiState> = _taskDetailUiState
 
+    private var currentTask: LocalTaskEntity? = null
 
 
-    fun showTimePicker(){
+    init {
+        viewModelScope.launch {
+            fetchTask()
+            fetCategory()
+            fetchSubTasksList()
+        }
+    }
+
+
+    private suspend fun fetchSubTasksList() {
+        currentTask?.let {
+            val subTasks = subTaskRepository.getSubTaskLIst(it.taskId!!.toLong())
+            populateSubTaskList(subTasks)
+        }
+    }
+
+    private suspend fun fetchTask() {
+        currentTask = taskRepository.getTask(taskKey)
+        currentTask?.taskTitle?.let { updateTaskTitle(it) }
+        println("task category ${currentTask?.categoryIdFk}")
+    }
+
+    private suspend fun fetCategory() {
+        currentTask?.categoryIdFk?.let {
+            val currentCategory = categoryRepository.getCategoryById(it)
+            updateTaskCategoryUiState(currentCategory.categoryName)
+        }
+    }
+
+
+    fun updateTaskTitle(title: String) {
+
+        currentTask?.let {
+            updateTaskTitleUiState(title)
+            it.taskTitle = title
+            viewModelScope.launch {
+                taskRepository.updateTask(it)
+            }
+        }
+    }
+
+
+    fun showTimePicker() {
         updateShowTimePicker(show = true)
     }
 
-    fun hideTimePicker(){
+    fun hideTimePicker() {
         updateShowTimePicker(show = false)
     }
 
 
-    fun showDatePicker(){
+    fun showDatePicker() {
         updateShowDueDatePicker(show = true)
     }
 
-    fun hideDatePicker(){
+    fun hideDatePicker() {
         updateShowDueDatePicker(show = false)
     }
 
-    fun selectDropDownMenuAction(action: Int){
+    fun selectDropDownMenuAction(action: Int) {
 
     }
 
 
-    fun updateSubTaskState(subTaskId: String, state: Boolean) {
-        updateSubTaskInput(isDone = state, subTaskId = subTaskId)
+    fun updateSubTaskState(subTask: LocalSubTaskEntity, state: Boolean) {
+        updateSubTaskInput(isDone = state, subTaskId = subTask.subTaskId)
+
+
+        updateSubTask(subTask.copy(isCompleted = state))
     }
 
     fun addNewSubTaskField() {
-        addNewSubTaskInput()
+        addNewSubTaskInputUiState()
     }
 
-    fun deleteSubTaskField(subTaskInputState: SubTaskInputState) {
-        deleteSubTaskInput(subTaskInputState)
+    fun deleteSubTaskField(subTask: LocalSubTaskEntity) {
+        deleteSubTaskInput(subTask)
+        deleteSubTask(subTask)
     }
 
-    fun onSubTaskInputChanges(subTaskInputState: SubTaskInputState, value: String) {
-        updateSubTaskInput(input = value, subTaskId = subTaskInputState.subTaskId)
+    fun onSubTaskInputChanges(subTask: LocalSubTaskEntity, value: String) {
+        updateSubTaskInput(input = value, subTaskId = subTask.subTaskId)
+        if (value.isEmpty()) {
+            deleteSubTask(subTask)
+        } else {
+
+            addSubTask(subTask.copy(title = value))
+        }
     }
 
-    fun setTaskCategory(category: Int?) {
-        println("category: $category")
+
+    //Update subtask in the source of truth
+    private fun addSubTask(subTaskEntity: LocalSubTaskEntity) {
+        viewModelScope.launch {
+            subTaskRepository.insertSubTask(subTaskEntity)
+        }
+    }
+
+    private fun updateSubTask(subTaskEntity: LocalSubTaskEntity) {
+        viewModelScope.launch {
+            subTaskRepository.updateSubTask(subTaskEntity)
+        }
+    }
+
+    private fun deleteSubTask(subTaskEntity: LocalSubTaskEntity) {
+        viewModelScope.launch {
+            subTaskRepository.deleteSubTask(subTaskEntity)
+        }
+    }
+
+    fun updateTaskCategory(category: LocalCategoryEntity?) {
+        viewModelScope.launch {
+            currentTask?.let {
+                it.categoryIdFk = category?.categoryId
+                taskRepository.updateTask(it)
+                updateTaskCategoryUiState(category?.categoryName)
+            }
+
+        }
     }
 
     fun setDueDate(dueDate: Long?) {
@@ -71,15 +166,22 @@ class TaskDetailViewModel @Inject constructor() :
     }
 
 
-    private fun updateShowTimePicker(show: Boolean){
+    private fun updateShowTimePicker(show: Boolean) {
         _taskDetailUiState.update { currentState ->
             currentState.copy(showTimePicker = show)
         }
     }
 
-    private fun updateShowDueDatePicker(show: Boolean){
+    private fun updateShowDueDatePicker(show: Boolean) {
         _taskDetailUiState.update { currentState ->
             currentState.copy(showDueDatePicker = show)
+        }
+    }
+
+
+    private fun populateSubTaskList(subTasksList: List<LocalSubTaskEntity>) {
+        _taskDetailUiState.update { currentState ->
+            currentState.copy(subTasksInputInputState = subTasksList)
         }
     }
 
@@ -88,10 +190,10 @@ class TaskDetailViewModel @Inject constructor() :
 
         _taskDetailUiState.update { currentState ->
 
-            val updatedSubTaskInputStates: List<SubTaskInputState> =
+            val updatedSubTaskInputStates: List<LocalSubTaskEntity> =
                 currentState.subTasksInputInputState.map { subTask ->
                     if (subTask.subTaskId == subTaskId) {
-                        subTask.copy(subTaskName = input)
+                        subTask.copy(title = input)
                     } else {
                         subTask
                     }
@@ -107,17 +209,19 @@ class TaskDetailViewModel @Inject constructor() :
 
     private fun updateSubTaskInput(isDone: Boolean, subTaskId: String) {
 
-        _taskDetailUiState.update { currentState ->
 
-            val updatedSubTaskInputStates: List<SubTaskInputState> =
-                currentState.subTasksInputInputState.map { subTask ->
-                    if (subTask.subTaskId == subTaskId) {
-                        subTask.copy(isSubTaskDone = isDone)
-                    } else {
-                        subTask
-                    }
+        val updatedSubTaskInputStates: List<LocalSubTaskEntity> =
+            _taskDetailUiState.value.subTasksInputInputState.map { subTask ->
+                if (subTask.subTaskId == subTaskId) {
+                    println("update subTask: $subTaskId")
+                    subTask.copy(isCompleted = isDone)
+                } else {
+                    subTask
                 }
+            }
 
+        _taskDetailUiState.update { currentState ->
+            println("update")
             currentState.copy(
                 subTasksInputInputState = updatedSubTaskInputStates
             )
@@ -126,37 +230,44 @@ class TaskDetailViewModel @Inject constructor() :
     }
 
 
-    private fun deleteSubTaskInput(subTaskInputState: SubTaskInputState) {
+    private fun deleteSubTaskInput(subTask: LocalSubTaskEntity) {
         viewModelScope.launch {
 
 
             _taskDetailUiState.update { currentState ->
-                val updateList: List<SubTaskInputState> =
-                    currentState.subTasksInputInputState.filter { it.subTaskId != subTaskInputState.subTaskId }
+                val updateList: List<LocalSubTaskEntity> =
+                    currentState.subTasksInputInputState.filter { it.subTaskId != subTask.subTaskId }
                 currentState.copy(subTasksInputInputState = updateList)
             }
         }
     }
 
-    private fun addNewSubTaskInput() {
+    private fun addNewSubTaskInputUiState() {
         viewModelScope.launch {
-            val subTaskInputStateInput =
-                SubTaskInputState(
-                    UUID.randomUUID().toString(),
-                    UUID.randomUUID().toString(),
-                    null,
-                    false
-                )
+            val subTaskField = LocalSubTaskEntity(
+                subTaskId = UUID.randomUUID().toString(),
+                taskIdFk = currentTask?.taskId!!.toLong(),
+                title = "",
+                isCompleted = false
+            )
 
             _taskDetailUiState.update { currentState ->
-                currentState.copy(subTasksInputInputState = (currentState.subTasksInputInputState + subTaskInputStateInput) as MutableList<SubTaskInputState>)
+                currentState.copy(subTasksInputInputState = (currentState.subTasksInputInputState + subTaskField) as MutableList<LocalSubTaskEntity>)
             }
         }
     }
 
+    private fun updateTaskTitleUiState(title: String) {
+        _taskDetailUiState.update { currentState ->
+            currentState.copy(taskTitle = title)
+        }
+    }
 
-    private fun updateTaskCategory(category: String) {
-        //Send set in the source of truth
+
+    private fun updateTaskCategoryUiState(category: String?) {
+        _taskDetailUiState.update { currentState ->
+            currentState.copy(category = category)
+        }
     }
 
 

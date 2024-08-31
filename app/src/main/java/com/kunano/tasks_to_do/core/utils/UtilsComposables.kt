@@ -30,6 +30,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardColors
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.Divider
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ElevatedButton
@@ -179,7 +180,7 @@ fun categoryAssistChip(
     categoriesList: List<LocalCategoryEntity>,
     trailingIcon: (ImageVector)? = null,
     selectedCategoryName: String?,
-    selectItem: (categoryId: Int?) -> Unit,
+    selectItem: (categoryId: LocalCategoryEntity?) -> Unit,
     showCreateCategoryDialog: () -> Unit
 ) {
     var menuExpanded by remember {
@@ -220,7 +221,7 @@ fun CategoriesDropDownMenu(
     itemsList: List<LocalCategoryEntity>,
     menuExpanded: Boolean,
     onDismiss: () -> Unit,
-    selectItem: (categoryId: Int?) -> Unit,
+    selectItem: (category: LocalCategoryEntity?) -> Unit,
     createCategory: () -> Unit
 ) {
     DropdownMenu(
@@ -244,7 +245,7 @@ fun CategoriesDropDownMenu(
 
         itemsList.fastForEach {
             DropdownMenuItem(text = { Text(text = it.categoryName) }, onClick = {
-                selectItem(it.categoryId)
+                selectItem(it)
                 onDismiss()
 
             })
@@ -409,8 +410,8 @@ fun searchBar(
 
 @Composable
 fun customBasicTextField(
-    textStyle: (TextStyle)? = null,
-    singleLine: (Boolean)? = null,
+    textStyle: TextStyle? = null,
+    singleLine: Boolean? = null,
     modifier: Modifier,
     value: String,
     hint: Int,
@@ -418,11 +419,13 @@ fun customBasicTextField(
     onValueChange: (value: String) -> Unit,
 
     ) {
+
     BasicTextField(
         modifier = modifier,
         textStyle = textStyle ?: TextStyle(fontSize = 20.sp),
         singleLine = singleLine ?: true,
-        value = value, onValueChange = onValueChange,
+        value = value,
+        onValueChange = onValueChange,
         interactionSource = mutableInteractionSource,
         decorationBox = {
             if (value.isEmpty()) {

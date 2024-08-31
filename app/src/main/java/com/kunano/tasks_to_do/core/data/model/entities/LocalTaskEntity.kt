@@ -15,12 +15,12 @@ import androidx.room.PrimaryKey
     )]
 )
 data class LocalTaskEntity(
-    @PrimaryKey(autoGenerate = true) var taskId: Int,
-    var categoryIdFk: Int,
+    @PrimaryKey(autoGenerate = true) var taskId: Long? = null,
+    var categoryIdFk: Long?,
     var taskTitle: String,
-    var dueDate: String,
+    var dueDate: Long,
     var isCompleted: Boolean,
-    @Embedded var note: Note
+    @Embedded var note: Note? = null
 )
 
 

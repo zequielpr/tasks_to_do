@@ -114,9 +114,7 @@ fun navHost(
                 )
             }
             composable<Route.TaskDetails> {
-                val args = it.toRoute<Route.TaskDetails>()
                 TaskDetailScreen(
-                    taskKey = args.taskKey,
                     contentPadding = innerPadding,
                     bottomAppBarScrollBehavior = bottomAppBarScrollBehavior,
                     navigate = { route -> navigate(navController, route) },

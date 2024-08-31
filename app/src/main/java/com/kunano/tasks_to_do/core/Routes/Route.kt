@@ -14,7 +14,7 @@ sealed class Route(val route: String, @StringRes val resourceId: Int) {
 
     /** inside taskList nested graph **/
     @Serializable
-    data class TaskDetails(val taskKey: String) : Route("TaskDetails", R.string.task_details)
+    data class TaskDetails(val taskKey: Long) : Route("TaskDetails", R.string.task_details)
 
     @Serializable
     data object ManageCategories:  Route("ManageCategories", R.string.manage_categories)
@@ -26,7 +26,7 @@ sealed class Route(val route: String, @StringRes val resourceId: Int) {
 
 
     @Serializable
-    data class NoteScreen(val taskKey: String) : Route("NoteScreen", R.string.notes)
+    data class NoteScreen(val taskKey: Long) : Route("NoteScreen", R.string.notes)
 
 
 }

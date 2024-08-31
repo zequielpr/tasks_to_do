@@ -36,18 +36,22 @@ class ManageCategoriesViewModel @Inject constructor(private val categoryReposito
 
 
     var categoryToUpdateOrDelete: LocalCategoryEntity? = null
+
+
+    var newCategoryReceiver: ((category: LocalCategoryEntity) -> Unit)? = null
+
     init {
         viewModelScope.launch {
-            categoryRepository.getAll().collect{
+            categoryRepository.getAll().collect {
                 println("Category: ${it.isEmpty()}")
-               updateCategoryList(it)
+                updateCategoryList(it)
             }
         }
 
     }
 
 
-    fun showAddAcategoryDialog() {
+    fun showAddCategoryDialog() {
         deactivateEditingMode()
         showCreateOrUpdateTaskDialog()
     }
@@ -62,7 +66,7 @@ class ManageCategoriesViewModel @Inject constructor(private val categoryReposito
 
 
     fun saveChanges() {
-        val categoryName:String = _manageCategoriesScreenState.value.categoryName
+        val categoryName: String = _manageCategoriesScreenState.value.categoryName
         if (categoryName.isEmpty()) {
             showErrorMessage()
             return
@@ -87,11 +91,17 @@ class ManageCategoriesViewModel @Inject constructor(private val categoryReposito
     }
 
     private fun createCategory(categoryName: String) {
+        val newCategory = LocalCategoryEntity(categoryName = categoryName)
         //Create
-        viewModelScope.launch  {
-            categoryRepository.insertCategory(LocalCategoryEntity(categoryName = categoryName))
-
+        viewModelScope.launch {
+            val category = categoryRepository.insertAndReturnCategory(newCategory)
+            category?.let { category ->
+                newCategoryReceiver?.let {
+                    it(category)
+                }
+            }
         }
+
     }
 
 
