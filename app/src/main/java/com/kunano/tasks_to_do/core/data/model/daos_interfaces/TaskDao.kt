@@ -18,11 +18,11 @@ interface TaskDao {
     suspend fun getTaskById(taskId: Long): LocalTaskEntity
 
     @Update
-    suspend fun updateTask(taskEntity: LocalTaskEntity)
+    suspend fun updateTask(taskEntity: LocalTaskEntity): Int
 
     @Insert
     suspend fun insertTask(taskEntity: LocalTaskEntity): Long
 
     @Delete
-    suspend fun deleteTask(taskEntity: LocalTaskEntity)
+    suspend fun deleteTask(taskEntity: LocalTaskEntity): Int
 }

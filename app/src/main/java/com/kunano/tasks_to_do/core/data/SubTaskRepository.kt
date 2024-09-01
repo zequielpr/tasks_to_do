@@ -17,9 +17,9 @@ class SubTaskRepository @Inject constructor(@ApplicationContext val context: Con
     private val subTaskDao: SubTaskDao = getDataBaseInstance(context)!!.SubTaskDao()
 
 
-    suspend fun insertSubTask(subTaskEntity: LocalSubTaskEntity){
-        withContext(Dispatchers.IO){
-            subTaskDao.insertSubTask(subTaskEntity)
+    suspend fun insertSubTask(subTaskEntity: LocalSubTaskEntity): Boolean{
+        return withContext(Dispatchers.IO){
+            subTaskDao.insertSubTask(subTaskEntity) > 0
         }
     }
 

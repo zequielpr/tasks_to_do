@@ -6,6 +6,7 @@ import androidx.room.PrimaryKey
 
 
 @Entity(
+    primaryKeys = ["subTaskId", "taskIdFk" ],
     tableName = "subTaskTable",
     foreignKeys = [ForeignKey(
         entity = LocalTaskEntity::class,
@@ -15,7 +16,7 @@ import androidx.room.PrimaryKey
     )]
 )
 data class LocalSubTaskEntity(
-    @PrimaryKey var subTaskId: String,
+    var subTaskId: String,
     val title: String,
     var taskIdFk: Long,
     val isCompleted: Boolean

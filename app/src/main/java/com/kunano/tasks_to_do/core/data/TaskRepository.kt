@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.reflect.jvm.internal.impl.descriptors.Visibilities.Local
 
 @Singleton
 class TaskRepository @Inject constructor(
@@ -36,15 +37,23 @@ class TaskRepository @Inject constructor(
         }
     }
 
-    suspend fun deleteTask(taskEntity: LocalTaskEntity) {
-        withContext(Dispatchers.IO){
-            _taskDao.deleteTask(taskEntity)
+
+    suspend fun insertAndGetTask(taskEntity: LocalTaskEntity): LocalTaskEntity? {
+        return withContext(Dispatchers.IO) {
+            val taskId = _taskDao.insertTask(taskEntity);
+            _taskDao.getTaskById(taskId)
         }
     }
 
-    suspend fun updateTask(taskEntity: LocalTaskEntity) {
-        withContext(Dispatchers.IO){
-            _taskDao.updateTask(taskEntity)
+    suspend fun deleteTask(taskEntity: LocalTaskEntity): Boolean {
+        return withContext(Dispatchers.IO){
+            _taskDao.deleteTask(taskEntity) > 0
+        }
+    }
+
+    suspend fun updateTask(taskEntity: LocalTaskEntity):Boolean {
+       return withContext(Dispatchers.IO){
+            _taskDao.updateTask(taskEntity) > 0
         }
     }
 

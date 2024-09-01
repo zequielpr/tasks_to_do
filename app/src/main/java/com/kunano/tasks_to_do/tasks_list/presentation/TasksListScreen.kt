@@ -112,8 +112,9 @@ fun TasksListScreen(
             taskListContent(
                 paddingValues,
                 tasksListScreedUiState.tasksList,
+                changeTaskState = viewModel::updateTaskState,
                 navigateToTaskDetails = {
-                   navigate(Route.TaskDetails(taskKey = it))
+                    navigate(Route.TaskDetails(taskKey = it))
                 })
         }
 
@@ -286,6 +287,7 @@ fun floatingActionButton(
 fun taskListContent(
     innerPadding: PaddingValues,
     tasksList: List<LocalTaskEntity>,
+    changeTaskState: (task: LocalTaskEntity, state: Boolean) -> Unit,
     navigateToTaskDetails: (taskId: Long) -> Unit
 ) {
 
@@ -300,7 +302,11 @@ fun taskListContent(
     ) {
 
         items(tasksList) { task ->
-            taskCard(task = task, navigateToTaskDetails)
+            taskCard(
+                task = task,
+                navigateToTaskDetails = navigateToTaskDetails,
+                changeTaskState = changeTaskState
+            )
         }
         item {
             Box(modifier = Modifier.height(20.dp))
@@ -311,15 +317,20 @@ fun taskListContent(
 
 
 @Composable
-fun taskCard(task: LocalTaskEntity, navigateToTaskDetails: (taskId: Long) -> Unit) {
-    var taskState by rememberSaveable { mutableStateOf(false) }
+fun taskCard(
+    task: LocalTaskEntity,
+    changeTaskState: (task: LocalTaskEntity, state: Boolean) -> Unit,
+    navigateToTaskDetails: (taskId: Long) -> Unit
+) {
     Card(modifier = Modifier
         .fillMaxWidth()
         .clickable { navigateToTaskDetails(task.taskId!!) }) {
         Row {
-            Checkbox(checked = taskState, onCheckedChange = { state -> taskState = state })
+            Checkbox(
+                checked = task.isCompleted,
+                onCheckedChange = { state -> changeTaskState(task, state) })
             Text(
-                textDecoration = if (taskState) TextDecoration.LineThrough else null,
+                textDecoration = if (task.isCompleted) TextDecoration.LineThrough else null,
                 modifier = Modifier.padding(14.dp),
                 text = task.taskTitle
             )
@@ -352,5 +363,9 @@ fun dropDownMenuPreview() {
 @Preview(showBackground = true)
 @Composable
 fun TaskListPreview() {
-    taskListContent(innerPadding = PaddingValues(20.dp), listOf(), navigateToTaskDetails = {})
+    taskListContent(
+        innerPadding = PaddingValues(20.dp),
+        listOf(),
+        changeTaskState = { task, state -> },
+        navigateToTaskDetails = {})
 }

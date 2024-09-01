@@ -22,13 +22,19 @@ import androidx.compose.material.icons.sharp.Clear
 import androidx.compose.material.icons.sharp.Menu
 import androidx.compose.material3.BottomAppBarDefaults
 import androidx.compose.material3.BottomAppBarScrollBehavior
+import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Snackbar
+import androidx.compose.material3.SnackbarData
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TopAppBarScrollBehavior
@@ -147,7 +153,7 @@ fun TaskDetailScreen(
 
         if (taskDetailsUiState.showDueDatePicker) {
             datePicker(
-                selectedDate = taskDetailsUiState.dueDate,
+                selectedDate = taskDetailsUiState.dueDateLong,
                 onDismiss = viewModel::hideDatePicker,
                 pickDate = viewModel::setDueDate
             )
@@ -157,6 +163,7 @@ fun TaskDetailScreen(
             dialTimePicker(onConfirm = {}, onDismiss = viewModel::hideTimePicker)
         }
 
+        SnackbarHost(hostState = taskDetailsUiState.snackBarHostState)
     }
 
 }
@@ -349,37 +356,43 @@ fun taskFeatures(
     pickDueDate: () -> Unit,
     setReminder: () -> Unit,
     editNotes: () -> Unit,
-    modifier: Modifier = Modifier.padding(24.dp),
+    modifier: Modifier = Modifier.padding(10.dp),
 ) {
     Column() {
         HorizontalDivider()
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.clickable { pickDueDate() }) {
-            Icon(Icons.Filled.DateRange, contentDescription = null)
-            Text(text = stringResource(id = R.string.due_date), modifier.weight(1f))
-            Text(text = "dueDate")
+        Box(modifier = Modifier.clickable { pickDueDate() }){
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = modifier) {
+                Icon(Icons.Filled.DateRange, contentDescription = null)
+                Text(text = taskDetailsUiState.dueDate?:"", modifier.weight(1f))
+                Text(text = stringResource(id = R.string.edit))
 
+            }
         }
         HorizontalDivider()
 
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.clickable { setReminder() }) {
-            Icon(Icons.Filled.Notifications, contentDescription = null)
-            Text(text = stringResource(id = R.string.time_and_reminder), modifier.weight(1f))
-            Text(text = "event time")
+       Box(modifier = Modifier.clickable { setReminder() }){
+           Row(
+               verticalAlignment = Alignment.CenterVertically,
+               modifier = modifier) {
+               Icon(Icons.Filled.Notifications, contentDescription = null)
+               Text(text = stringResource(id = R.string.time_and_reminder), modifier.weight(1f))
+               Text(text = "event time")
 
-        }
+           }
+       }
         HorizontalDivider()
 
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.clickable { editNotes() }) {
-            Icon(Icons.Filled.Menu, contentDescription = null)
-            Text(text = stringResource(id = R.string.notes), modifier.weight(1f))
-            Text(text = stringResource(id = R.string.edit))
+        Box(modifier = Modifier.clickable { editNotes() }){
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = modifier) {
+                Icon(Icons.Filled.Menu, contentDescription = null)
+                Text(text = stringResource(id = R.string.notes), modifier.weight(1f))
+                Text(text = stringResource(id = R.string.edit))
 
+            }
         }
 
         HorizontalDivider()

@@ -15,11 +15,11 @@ interface SubTaskDao {
     suspend fun getAll(taskId: Long): List<LocalSubTaskEntity>
 
     @Update
-    suspend fun updateSubTask(localSubTaskEntity: LocalSubTaskEntity)
+    suspend fun updateSubTask(localSubTaskEntity: LocalSubTaskEntity): Int
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertSubTask(localSubTaskEntity: LocalSubTaskEntity)
+    suspend fun insertSubTask(localSubTaskEntity: LocalSubTaskEntity): Long
 
     @Delete
-    suspend fun deleteSubTask(localSubTaskEntity: LocalSubTaskEntity)
+    suspend fun deleteSubTask(localSubTaskEntity: LocalSubTaskEntity): Int
 }

@@ -33,6 +33,10 @@
     <string name="mark_as_done">Mark as done</string>
     <string name="duplicate_task">Duplicate task</string>
     <string name="add_sub_task">Add subtask</string>
+    <string name="task_marked_as_done">Task marked as done</string>
+    <string name="task_deleted">Task deleted</string>
+    <string name="task_duplicated">Task duplicated</string>
+    <string name="undo">Undo</string>
 
 
 

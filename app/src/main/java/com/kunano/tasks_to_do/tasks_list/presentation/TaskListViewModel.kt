@@ -35,6 +35,7 @@ class TaskListViewModel @Inject constructor(
 
 
 
+
     init {
         viewModelScope.launch {
             taskRepository.getTasksList().collect {
@@ -54,6 +55,13 @@ class TaskListViewModel @Inject constructor(
         updateCategoriesList(categoryList = catList)
 
     }
+
+    fun updateTaskState(task: LocalTaskEntity, isComplete: Boolean){
+        viewModelScope.launch {
+            taskRepository.updateTask(task.copy(isCompleted = isComplete))
+        }
+    }
+
 
 
     fun selectSortByOption(option: Int) {

@@ -2,12 +2,10 @@ package com.kunano.tasks_to_do.tasks_list.create_task
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.kunano.tasks_to_do.core.data.CategoryRepository
 import com.kunano.tasks_to_do.core.data.TaskRepository
 import com.kunano.tasks_to_do.core.data.model.entities.LocalCategoryEntity
 import com.kunano.tasks_to_do.core.data.model.entities.LocalTaskEntity
 import com.kunano.tasks_to_do.core.utils.Utils
-import com.kunano.tasks_to_do.tasks_list.manage_category.ManageCategoriesScreenState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -98,7 +96,7 @@ class CreateTaskViewModel @Inject constructor(private val taskRepository: TaskRe
         if (date != null) {
             updateSelectedDateInMilliseconds(date = date)
 
-            val dayOfMonth = Utils.millToLocalDateTie(date).dayOfMonth
+            val dayOfMonth = Utils.millToLocalDateTime(date).dayOfMonth
             updateDayOfMonth(day = dayOfMonth)
         }
     }
