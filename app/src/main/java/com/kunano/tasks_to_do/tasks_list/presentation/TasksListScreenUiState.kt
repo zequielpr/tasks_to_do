@@ -2,6 +2,7 @@ package com.kunano.tasks_to_do.tasks_list.presentation
 
 import androidx.annotation.StringRes
 import com.kunano.tasks_to_do.R
+import com.kunano.tasks_to_do.core.data.model.entities.LocalCategoryEntity
 import com.kunano.tasks_to_do.core.data.model.entities.LocalTaskEntity
 
 data class TasksListScreenUiState(
@@ -10,8 +11,8 @@ data class TasksListScreenUiState(
     val showSortByDialog: Boolean = false,
     val isSearchModeActive: Boolean = false,
     val showCreateTaskDialog: Boolean = false,
-    val selectedCategory: String? = null,
-    val categoryList: List<String> = listOf(),
+    val selectedCategory: LocalCategoryEntity? = null,
+    val categoryList: List<LocalCategoryEntity> = listOf(),
     val tasksList: List<LocalTaskEntity> = listOf()
 )
 

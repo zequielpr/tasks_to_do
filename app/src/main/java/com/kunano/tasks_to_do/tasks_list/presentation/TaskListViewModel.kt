@@ -8,22 +8,30 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavController
 import androidx.navigation.toRoute
+import com.kunano.tasks_to_do.core.data.CategoryRepository
 import com.kunano.tasks_to_do.core.data.SubTaskRepository
 import com.kunano.tasks_to_do.core.data.TaskRepository
+import com.kunano.tasks_to_do.core.data.model.entities.LocalCategoryEntity
 import com.kunano.tasks_to_do.core.data.model.entities.LocalTaskEntity
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.shareIn
+import kotlinx.coroutines.flow.single
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class TaskListViewModel @Inject constructor(
-    private val taskRepository: TaskRepository,
-) :
-    ViewModel() {
+    private val taskRepository: TaskRepository, private val categoryRepository: CategoryRepository
+) : ViewModel() {
 
     //Intern updates
     private val _tasksListScreenUiState = MutableStateFlow(TasksListScreenUiState())
@@ -32,36 +40,42 @@ class TaskListViewModel @Inject constructor(
     val tasksListScreedUiState = _tasksListScreenUiState
 
 
-
-
-
-
+    private var currentTaskList: List<LocalTaskEntity> = listOf()
     init {
-        viewModelScope.launch {
-            taskRepository.getTasksList().collect {
-                updateTasksList(it)
-            }
-        }
-        val tasksList = arrayListOf<String>()
-        val catList = arrayListOf<String>()
-        for (i in 100..200) {
-            tasksList.add("Task $i")
-        }
 
-        for (i in 3..7) {
-            catList.add("category$i")
-        }
-
-        updateCategoriesList(categoryList = catList)
-
+        fetchTasksList()
+        fetchCategoryList()
     }
 
-    fun updateTaskState(task: LocalTaskEntity, isComplete: Boolean){
+
+    private fun fetchCategoryList() {
+        viewModelScope.launch {
+            categoryRepository.getAll().collect {
+                updateCategoriesList(it)
+            }
+        }
+    }
+
+
+    private fun fetchTasksList() {
+
+        viewModelScope.launch {
+            taskRepository.getTasksList().collect {
+                println("Collecting...")
+                val selectedCategory = _tasksListScreenUiState.value.selectedCategory
+                currentTaskList = it
+                filterByTaskCategory(selectedCategory)
+            }
+
+        }
+    }
+
+
+    fun updateTaskState(task: LocalTaskEntity, isComplete: Boolean) {
         viewModelScope.launch {
             taskRepository.updateTask(task.copy(isCompleted = isComplete))
         }
     }
-
 
 
     fun selectSortByOption(option: Int) {
@@ -102,8 +116,15 @@ class TaskListViewModel @Inject constructor(
     }
 
 
-    fun filterByTaskCategory(category: String?) {
+    fun filterByTaskCategory(category: LocalCategoryEntity?) {
         updateSelectedCategory(category)
+
+        if (category?.categoryId == null) {
+            updateTasksList(currentTaskList)
+        } else {
+            val filteredTaskList = currentTaskList.filter { task -> task.categoryIdFk == category.categoryId }
+            updateTasksList(filteredTaskList)
+        }
     }
 
 
@@ -142,13 +163,13 @@ class TaskListViewModel @Inject constructor(
     }
 
 
-    private fun updateSelectedCategory(category: String?) {
+    private fun updateSelectedCategory(category: LocalCategoryEntity?) {
         _tasksListScreenUiState.update { currentState ->
             currentState.copy(selectedCategory = category)
         }
     }
 
-    private fun updateCategoriesList(categoryList: List<String>) {
+    private fun updateCategoriesList(categoryList: List<LocalCategoryEntity>) {
         _tasksListScreenUiState.update { currentState ->
             currentState.copy(categoryList = categoryList)
         }

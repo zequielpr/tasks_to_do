@@ -56,6 +56,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.compose.rememberNavController
 import com.kunano.tasks_to_do.R
+import com.kunano.tasks_to_do.core.data.model.entities.LocalCategoryEntity
 import com.kunano.tasks_to_do.core.data.model.entities.LocalTaskEntity
 import com.kunano.tasks_to_do.core.utils.navigateBackButton
 import com.kunano.tasks_to_do.core.utils.searchBar
@@ -150,7 +151,7 @@ fun TasksListScreen(
 fun topBar(
     scrollBehavior: TopAppBarScrollBehavior?,
     tasksListScreenUiState: TasksListScreenUiState,
-    filter: (category: String?) -> Unit,
+    filter: (category: LocalCategoryEntity?) -> Unit,
     activateSearchMode: () -> Unit,
     showSortByDialog: () -> Unit,
     manageCategories: () -> Unit
@@ -190,7 +191,7 @@ fun topBar(
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun TaskCategoryCarousel(
-    tasksListScreenUiState: TasksListScreenUiState, filter: (category: String?) -> Unit
+    tasksListScreenUiState: TasksListScreenUiState, filter: (category: LocalCategoryEntity?) -> Unit
 ) {
 
 
@@ -206,14 +207,16 @@ fun TaskCategoryCarousel(
                 label = { Text(text = stringResource(id = R.string.all)) })
         }
 
-        if (tasksListScreenUiState.tasksList.isNotEmpty()) {
-            items(tasksListScreenUiState.tasksList) { categoryLabel ->
+
+        items(tasksListScreenUiState.categoryList) { category ->
+            category?.let {
                 categoryBtn(
-                    label = "categoryLabel",
+                    category = it,
                     selectedCategory = tasksListScreenUiState.selectedCategory,
                     selectCategory = filter
                 )
             }
+
         }
 
 
@@ -223,13 +226,15 @@ fun TaskCategoryCarousel(
 
 @Composable
 fun categoryBtn(
-    label: String, selectedCategory: String?, selectCategory: (category: String) -> Unit
+    category: LocalCategoryEntity,
+    selectedCategory: LocalCategoryEntity?,
+    selectCategory: (category: LocalCategoryEntity) -> Unit
 ) {
     FilterChip(colors = FilterChipDefaults.filterChipColors(selectedContainerColor = MaterialTheme.colorScheme.primary),
         shape = ShapeDefaults.Large,
-        selected = label == selectedCategory,
-        onClick = { selectCategory(label) },
-        label = { Text(text = label) })
+        selected = category.categoryId == selectedCategory?.categoryId,
+        onClick = { selectCategory(category) },
+        label = { Text(text = category.categoryName) })
 }
 
 
