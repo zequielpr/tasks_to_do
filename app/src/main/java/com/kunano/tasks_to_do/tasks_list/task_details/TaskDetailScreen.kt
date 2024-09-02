@@ -1,6 +1,7 @@
 package com.kunano.tasks_to_do.tasks_list.task_details
 
 import Route
+import android.content.Context
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
@@ -20,21 +21,15 @@ import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.sharp.Clear
 import androidx.compose.material.icons.sharp.Menu
-import androidx.compose.material3.BottomAppBarDefaults
 import androidx.compose.material3.BottomAppBarScrollBehavior
-import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Snackbar
-import androidx.compose.material3.SnackbarData
 import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TopAppBarScrollBehavior
@@ -45,12 +40,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -59,6 +56,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.util.fastForEach
+import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kunano.tasks_to_do.R
@@ -73,6 +71,8 @@ import com.kunano.tasks_to_do.core.utils.dialTimePicker
 import com.kunano.tasks_to_do.core.utils.navigateBackButton
 import com.kunano.tasks_to_do.tasks_list.manage_category.ManageCategoriesScreenState
 import com.kunano.tasks_to_do.tasks_list.manage_category.ManageCategoriesViewModel
+import kotlinx.coroutines.flow.merge
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -160,7 +160,7 @@ fun TaskDetailScreen(
         }
 
         if (taskDetailsUiState.showTimePicker) {
-            dialTimePicker(onConfirm = {}, onDismiss = viewModel::hideTimePicker)
+            dialTimePicker(onConfirm = viewModel::setTimeReminder, onDismiss = viewModel::hideTimePicker)
         }
 
         SnackbarHost(hostState = taskDetailsUiState.snackBarHostState)
@@ -360,34 +360,62 @@ fun taskFeatures(
 ) {
     Column() {
         HorizontalDivider()
-        Box(modifier = Modifier.clickable { pickDueDate() }){
+        Box(modifier = Modifier.clickable { pickDueDate() }) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                modifier = modifier) {
+                modifier = modifier
+            ) {
                 Icon(Icons.Filled.DateRange, contentDescription = null)
-                Text(text = taskDetailsUiState.dueDate?:"", modifier.weight(1f))
+                Text(text = taskDetailsUiState.dueDate ?: "", modifier.weight(1f))
                 Text(text = stringResource(id = R.string.edit))
 
             }
         }
         HorizontalDivider()
 
-       Box(modifier = Modifier.clickable { setReminder() }){
-           Row(
-               verticalAlignment = Alignment.CenterVertically,
-               modifier = modifier) {
-               Icon(Icons.Filled.Notifications, contentDescription = null)
-               Text(text = stringResource(id = R.string.time_and_reminder), modifier.weight(1f))
-               Text(text = "event time")
-
-           }
-       }
-        HorizontalDivider()
-
-        Box(modifier = Modifier.clickable { editNotes() }){
+        Box(modifier = Modifier.clickable { setReminder() }) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                modifier = modifier) {
+                modifier = modifier
+            ) {
+                Icon(Icons.Filled.Notifications, contentDescription = null)
+                Text(
+                    text = stringResource(id = R.string.reminder), modifier.weight(1f)
+                )
+                Column {
+                    Row {
+                        if (taskDetailsUiState.reminderUiState?.eventTime != null) {
+                            Text(
+                                text = stringResource(id = R.string.event_time),
+                                modifier = Modifier.padding(8.dp, 0.dp)
+                            )
+                        }
+                        Text(
+                            text = taskDetailsUiState.reminderUiState.eventTime
+                                ?: stringResource(id = R.string.no)
+                        )
+                    }
+                    Row {
+                        if (taskDetailsUiState.reminderUiState.reminderTime != null) {
+                            Text(
+                                text = stringResource(id = R.string.remind_at),
+                                modifier = Modifier.padding(8.dp, 0.dp)
+                            )
+                            Text(text = taskDetailsUiState.reminderUiState.reminderTime)
+                        }
+
+                    }
+                }
+
+            }
+        }
+        HorizontalDivider()
+
+        Box(modifier = Modifier.clickable { editNotes() }) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = modifier
+            ) {
                 Icon(Icons.Filled.Menu, contentDescription = null)
                 Text(text = stringResource(id = R.string.notes), modifier.weight(1f))
                 Text(text = stringResource(id = R.string.edit))

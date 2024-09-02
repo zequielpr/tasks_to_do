@@ -28,7 +28,9 @@ class CategoryRepository @Inject constructor(@ApplicationContext context: Contex
     }
 
     suspend fun getCategoryById(categoryId: Long): LocalCategoryEntity{
-       return categoryDao.getCategoryById(categoryId)
+       return withContext(Dispatchers.IO){
+           categoryDao.getCategoryById(categoryId)
+       }
     }
 
 

@@ -17,6 +17,9 @@ interface TaskDao {
     @Query("SELECT * FROM task_table WHERE taskId IN (:taskId)")
     suspend fun getTaskById(taskId: Long): LocalTaskEntity
 
+    @Query("SELECT * FROM task_table WHERE taskId IN (:taskId)")
+    fun getTaskByIdLive(taskId: Long): Flow<LocalTaskEntity>
+
     @Update
     suspend fun updateTask(taskEntity: LocalTaskEntity): Int
 

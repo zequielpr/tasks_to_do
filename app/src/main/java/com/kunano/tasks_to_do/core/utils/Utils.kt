@@ -14,11 +14,20 @@ class Utils {
         @RequiresApi(Build.VERSION_CODES.O)
         fun getCurrentTimeInMilliseconds(): Long{
             val currentLocalDate = LocalDateTime.now()
-            val currentLocalDateInMilli = currentLocalDate.toInstant(ZoneOffset.UTC).toEpochMilli()
+            val currentLocalDateInMilli = currentLocalDate.atZone(ZoneId.systemDefault())  // Apply the system's default timezone
+                .toInstant()// Convert to Instant
+                .toEpochMilli();// Get milliseconds since epoch
             return currentLocalDateInMilli
         }
 
-        @RequiresApi(Build.VERSION_CODES.O)
+        fun localDateToMilliseconds(localDate: LocalDateTime): Long{
+            val currentLocalDateInMilli = localDate.atZone(ZoneId.systemDefault())  // Apply the system's default timezone
+                .toInstant()// Convert to Instant
+                .toEpochMilli();// Get milliseconds since epoch
+            return currentLocalDateInMilli
+        }
+
+
         fun millToLocalDateTime(timestampInMilli: Long): LocalDateTime{
             val localDateTime = Instant.ofEpochMilli(timestampInMilli)
                 .atZone(ZoneId.systemDefault())

@@ -22,7 +22,14 @@ class TaskRepository @Inject constructor(
 
     //Move the coroutine to the IO thread
     suspend fun getTask(taskId: Long): LocalTaskEntity {
-        return _taskDao.getTaskById(taskId = taskId)
+        return withContext(Dispatchers.IO){
+            _taskDao.getTaskById(taskId = taskId)
+        }
+
+    }
+
+    fun getTaskLive(taskId: Long): Flow<LocalTaskEntity> {
+        return _taskDao.getTaskByIdLive(taskId = taskId)
 
     }
 

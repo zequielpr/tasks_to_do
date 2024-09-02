@@ -1,7 +1,9 @@
 package com.kunano.tasks_to_do.tasks_list.task_details
 
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarResult
+import androidx.compose.material3.TimePickerState
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -14,12 +16,13 @@ import com.kunano.tasks_to_do.core.data.TaskRepository
 import com.kunano.tasks_to_do.core.data.model.entities.LocalCategoryEntity
 import com.kunano.tasks_to_do.core.data.model.entities.LocalSubTaskEntity
 import com.kunano.tasks_to_do.core.data.model.entities.LocalTaskEntity
+import com.kunano.tasks_to_do.core.data.model.entities.Reminder
 import com.kunano.tasks_to_do.core.utils.Utils
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import java.time.format.FormatStyle
 import java.util.UUID
@@ -32,8 +35,7 @@ class TaskDetailViewModel @Inject constructor(
     private val categoryRepository: CategoryRepository,
     private val subTaskRepository: SubTaskRepository,
     private val stringsResourceRepository: StringsResourceRepository
-) :
-    ViewModel() {
+) : ViewModel() {
 
     val taskKey: Long = savedStateHandle.toRoute<Route.TaskDetails>().taskKey
     private val _taskDetailUiState: MutableStateFlow<TaskDetailsUiState> =
@@ -45,21 +47,31 @@ class TaskDetailViewModel @Inject constructor(
 
 
     init {
+        fetchTaskLive()
+        println("Task title: ")
+        fetchTask()
+    }
+
+    private fun fetchTask(){
         viewModelScope.launch {
-            fetchTask()
-            fetCategory()
+            val task = taskRepository.getTask(taskKey)
+
+            populateTaskTitleUiState(task.taskTitle)
             fetchSubTasksList()
         }
     }
 
 
-    private suspend fun fetchTask() {
-        currentTask = taskRepository.getTask(taskKey)
-        currentTask?.let {
-            updateTaskTitleUiState(it.taskTitle)
-            populateDueDate(it.dueDate)
+    private fun fetchTaskLive() {
+        viewModelScope.launch {
+            taskRepository.getTaskLive(taskKey).collect {
+                currentTask = it
+                fetCategory(it.categoryIdFk)
+                populateDueDate(Utils.localDateToMilliseconds(it.dueDate))
+                populateReminder(it.reminder)
+
+            }
         }
-        println("task category ${currentTask?.categoryIdFk}")
     }
 
 
@@ -86,14 +98,10 @@ class TaskDetailViewModel @Inject constructor(
 
 
     private suspend fun showSnackBar(
-        message: String,
-        actionLabel: String? = null,
-        duration: SnackbarDuration
+        message: String, actionLabel: String? = null, duration: SnackbarDuration
     ): SnackbarResult {
         return _taskDetailUiState.value.snackBarHostState.showSnackbar(
-            message = message,
-            actionLabel = actionLabel,
-            withDismissAction = true,
+            message = message, actionLabel = actionLabel, withDismissAction = true,
             // Defaults to SnackbarDuration.Short
             duration = duration
         )
@@ -123,8 +131,7 @@ class TaskDetailViewModel @Inject constructor(
         currentTask?.let {
             val newTask = taskRepository.insertAndGetTask(
                 it.copy(
-                    taskId = null,
-                    isCompleted = false
+                    taskId = null, isCompleted = false
                 )
             ) //A new id will be generate
 
@@ -188,18 +195,24 @@ class TaskDetailViewModel @Inject constructor(
     }
 
 
-    private suspend fun fetCategory() {
-        currentTask?.categoryIdFk?.let {
-            val currentCategory = categoryRepository.getCategoryById(it)
-            updateTaskCategoryUiState(currentCategory.categoryName)
+    private suspend fun fetCategory(categoryId: Long?) {
+        println("Category name: $categoryId")
+        var categoryName: String? = null
+
+        if (categoryId != null) {
+            val currentCategory = categoryRepository.getCategoryById(categoryId)
+            categoryName = currentCategory.categoryName
         }
+        updateTaskCategoryUiState(categoryName)
+
+
     }
 
 
     fun updateTaskTitle(title: String) {
 
         currentTask?.let {
-            updateTaskTitleUiState(title)
+            populateTaskTitleUiState(title)
             it.taskTitle = title
             viewModelScope.launch {
                 taskRepository.updateTask(it)
@@ -275,30 +288,97 @@ class TaskDetailViewModel @Inject constructor(
     fun updateTaskCategory(category: LocalCategoryEntity?) {
         viewModelScope.launch {
             currentTask?.let {
-                it.categoryIdFk = category?.categoryId
-                taskRepository.updateTask(it)
-                updateTaskCategoryUiState(category?.categoryName)
+                println("Update category")
+                taskRepository.updateTask(it.copy(categoryIdFk = category?.categoryId))
             }
 
         }
     }
 
     fun setDueDate(dueDate: Long?) {
-       viewModelScope.launch {
-           currentTask?.let {
-               val isSuccessful = taskRepository.updateTask(it.copy(dueDate = dueDate!!))
-               if (isSuccessful){
-                   populateDueDate(dueDate)
-               }
-               hideDatePicker()
-           }
-       }
+        viewModelScope.launch {
+
+
+            if (dueDate != null) {
+                val dueDate = Utils.millToLocalDateTime(dueDate)
+                currentTask?.let {
+                    taskRepository.updateTask(
+                        it.copy(
+                            dueDate = dueDate
+                        )
+                    )
+                    println("update due date")
+
+                    //Update reminder date if it exists
+                    it.reminder?.let { reminder ->
+                        val newReminder = Reminder(
+                            eventTime = reminder.eventTime?.withYear(dueDate.year)
+                                ?.withMonth(dueDate.monthValue)?.withDayOfMonth(dueDate.dayOfMonth),
+                            reminderTime = reminder.eventTime?.withYear(dueDate.year)
+                                ?.withMonth(dueDate.monthValue)?.withDayOfMonth(dueDate.dayOfMonth)
+                        )
+
+                        taskRepository.updateTask(
+                            it.copy(
+                                reminder = newReminder, dueDate = dueDate
+                            )
+                        )
+                    }
+                }
+            }
+
+            hideDatePicker()
+        }
     }
 
-    fun setTimeReminder(time: Long) {
+    @OptIn(ExperimentalMaterial3Api::class)
+    fun setTimeReminder(timePickerState: TimePickerState) {
+        val hour = timePickerState.hour
+        val minute = timePickerState.minute
 
+
+
+        viewModelScope.launch {
+            currentTask?.let {
+                var eventTime = it.dueDate.withHour(hour).withMinute(minute)
+                var remindAt = eventTime.minusMinutes(10)
+
+                taskRepository.updateTask(
+
+                    it.copy(
+                        reminder = Reminder(eventTime = eventTime, reminderTime = remindAt),
+
+                        )
+                )
+                hideTimePicker()
+
+
+            }
+        }
     }
 
+
+    private fun populateReminder(reminder: Reminder?) {
+
+        reminder?.let {
+            val eventTime =
+                Utils.localDateToString(dateTime = it.eventTime!!, FormatStyle.SHORT).split(",")
+                    .last()
+            val remindAt =
+                Utils.localDateToString(dateTime = it.reminderTime!!, FormatStyle.SHORT).split(",")
+                    .last()
+
+            _taskDetailUiState.update { currentState ->
+                currentState.copy(
+                    reminderUiState = currentState.reminderUiState.copy(
+                        eventTime = eventTime, reminderTime = remindAt
+                    )
+                )
+            }
+        }
+
+
+    }
 
     private fun updateShowTimePicker(show: Boolean) {
         _taskDetailUiState.update { currentState ->
@@ -322,6 +402,7 @@ class TaskDetailViewModel @Inject constructor(
     }
 
     private fun populateSubTaskList(subTasksList: List<LocalSubTaskEntity>) {
+        println("Populate sub tasks")
         _taskDetailUiState.update { currentState ->
             currentState.copy(subTasksInputInputState = subTasksList)
         }
@@ -399,7 +480,7 @@ class TaskDetailViewModel @Inject constructor(
         }
     }
 
-    private fun updateTaskTitleUiState(title: String) {
+    private fun populateTaskTitleUiState(title: String) {
         _taskDetailUiState.update { currentState ->
             currentState.copy(taskTitle = title)
         }
@@ -407,6 +488,7 @@ class TaskDetailViewModel @Inject constructor(
 
 
     private fun updateTaskCategoryUiState(category: String?) {
+
         _taskDetailUiState.update { currentState ->
             currentState.copy(category = category)
         }

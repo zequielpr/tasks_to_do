@@ -35,7 +35,7 @@ class ManageCategoriesViewModel @Inject constructor(private val categoryReposito
         _manageCategoriesScreenState.asStateFlow()
 
 
-    var categoryToUpdateOrDelete: LocalCategoryEntity? = null
+    private var categoryToUpdateOrDelete: LocalCategoryEntity? = null
 
 
     var newCategoryReceiver: ((category: LocalCategoryEntity) -> Unit)? = null

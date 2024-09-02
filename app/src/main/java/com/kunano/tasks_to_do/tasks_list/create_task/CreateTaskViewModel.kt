@@ -56,7 +56,7 @@ class CreateTaskViewModel @Inject constructor(private val taskRepository: TaskRe
 
         val task = LocalTaskEntity(
             taskTitle = taskName,
-            dueDate = dueDate,
+            dueDate = Utils.millToLocalDateTime(dueDate),
             categoryIdFk = categoryIdFk,
             isCompleted = false,
         )

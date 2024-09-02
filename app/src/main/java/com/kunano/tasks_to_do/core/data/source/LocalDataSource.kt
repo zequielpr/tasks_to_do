@@ -4,6 +4,8 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import androidx.room.TypeConverters
+import com.kunano.tasks_to_do.core.data.Converters
 import com.kunano.tasks_to_do.core.data.model.daos_interfaces.CategoryDao
 import com.kunano.tasks_to_do.core.data.model.daos_interfaces.SubTaskDao
 import com.kunano.tasks_to_do.core.data.model.daos_interfaces.TaskDao
@@ -15,6 +17,7 @@ import com.kunano.tasks_to_do.core.data.model.entities.LocalTaskEntity
     entities = [LocalTaskEntity::class, LocalSubTaskEntity::class, LocalCategoryEntity::class],
     version = 1
 )
+@TypeConverters(Converters::class)
 abstract class LocalDataSource : RoomDatabase() {
     abstract fun TaskDao(): TaskDao
     abstract fun SubTaskDao(): SubTaskDao
