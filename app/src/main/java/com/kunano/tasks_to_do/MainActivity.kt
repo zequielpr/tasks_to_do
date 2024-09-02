@@ -20,9 +20,13 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
@@ -37,7 +41,6 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
-import androidx.navigation.toRoute
 import com.kunano.tasks_to_do.tasks_list.presentation.TasksListScreen
 import com.kunano.tasks_to_do.core.theme.Tasks_to_doTheme
 import com.kunano.tasks_to_do.stats.presentation.StatsScreen
@@ -61,7 +64,11 @@ class MainActivity : ComponentActivity() {
             Tasks_to_doTheme {
                 val bottomAppBarScrollBehavior = BottomAppBarDefaults.exitAlwaysScrollBehavior()
                 val navController = rememberNavController()
+                val snackBarState by remember {
+                    mutableStateOf(SnackbarHostState())
+                }
                 Scaffold(
+                    snackbarHost = { SnackbarHost(hostState = snackBarState)},
                     bottomBar = {
                         bottomBar(
                             navController = navController,
@@ -73,6 +80,7 @@ class MainActivity : ComponentActivity() {
                             navController = navController,
                             bottomAppBarScrollBehavior = bottomAppBarScrollBehavior,
                             innerPadding = padding,
+                            snackBarHostState = snackBarState,
                             modifier = Modifier.nestedScroll(bottomAppBarScrollBehavior.nestedScrollConnection)
                         )
                     }
@@ -88,6 +96,7 @@ class MainActivity : ComponentActivity() {
 fun navHost(
     navController: NavHostController,
     bottomAppBarScrollBehavior: BottomAppBarScrollBehavior,
+    snackBarHostState: SnackbarHostState,
     innerPadding: PaddingValues,
     modifier: Modifier
 ) {
@@ -115,6 +124,7 @@ fun navHost(
             }
             composable<Route.TaskDetails> {
                 TaskDetailScreen(
+                    snackbarHostState = snackBarHostState,
                     contentPadding = innerPadding,
                     bottomAppBarScrollBehavior = bottomAppBarScrollBehavior,
                     navigate = { route -> navigate(navController, route) },

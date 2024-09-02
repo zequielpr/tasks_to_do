@@ -26,7 +26,7 @@ sealed class Route(val route: String, @StringRes val resourceId: Int) {
 
 
     @Serializable
-    data class NoteScreen(val taskKey: Long) : Route("NoteScreen", R.string.notes)
+    data class NoteScreen(val taskKey: Long) : Route("NoteScreen", R.string.note)
 
 
 }

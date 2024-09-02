@@ -1,7 +1,6 @@
 package com.kunano.tasks_to_do.tasks_list.task_details
 
 import Route
-import android.content.Context
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
@@ -22,6 +21,7 @@ import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.sharp.Clear
 import androidx.compose.material.icons.sharp.Menu
 import androidx.compose.material3.BottomAppBarScrollBehavior
+import androidx.compose.material3.Card
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -29,6 +29,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -40,14 +41,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -56,7 +55,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.util.fastForEach
-import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kunano.tasks_to_do.R
@@ -71,13 +69,12 @@ import com.kunano.tasks_to_do.core.utils.dialTimePicker
 import com.kunano.tasks_to_do.core.utils.navigateBackButton
 import com.kunano.tasks_to_do.tasks_list.manage_category.ManageCategoriesScreenState
 import com.kunano.tasks_to_do.tasks_list.manage_category.ManageCategoriesViewModel
-import kotlinx.coroutines.flow.merge
-import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TaskDetailScreen(
     contentPadding: PaddingValues,
+    snackbarHostState: SnackbarHostState,
     bottomAppBarScrollBehavior: BottomAppBarScrollBehavior,
     navigate: (route: Route) -> Unit,
     navigateBack: () -> Unit,
@@ -86,8 +83,9 @@ fun TaskDetailScreen(
     modifier: Modifier = Modifier
 ) {
     val taskKey = viewModel.taskKey
-    val taskDetailsUiState by viewModel.taskDetail.collectAsStateWithLifecycle()
+    val taskDetailsUiState by viewModel.taskDetail.collectAsStateWithLifecycle(TaskDetailsUiState(snackBarHostState = snackbarHostState))
     val manageCategoriesScreenState by manageCategoriesViewModel.manageCategoriesScreenState.collectAsStateWithLifecycle()
+    viewModel.setSnackBarHostState(snackbarHostState)
 
     //Set the the recently created category
     manageCategoriesViewModel.newCategoryReceiver = {
@@ -96,6 +94,8 @@ fun TaskDetailScreen(
 
     val topAppBarScrollBehavior =
         TopAppBarDefaults.enterAlwaysScrollBehavior(rememberTopAppBarState())
+
+
 
     Column(
         modifier
@@ -160,10 +160,12 @@ fun TaskDetailScreen(
         }
 
         if (taskDetailsUiState.showTimePicker) {
-            dialTimePicker(onConfirm = viewModel::setTimeReminder, onDismiss = viewModel::hideTimePicker)
+            dialTimePicker(
+                onConfirm = viewModel::setTimeReminder,
+                onDismiss = viewModel::hideTimePicker
+            )
         }
 
-        SnackbarHost(hostState = taskDetailsUiState.snackBarHostState)
     }
 
 }
@@ -301,12 +303,9 @@ fun subTaskCard(
 ) {
     val mutableInteractionSource by remember { mutableStateOf(MutableInteractionSource()) }
 
-    // Create a FocusRequester object
-    val focusRequester = remember { FocusRequester() }
 
 
-    //Focus on the last item
-
+    //Collect text field state
     val isTextFieldFocused by mutableInteractionSource.collectIsFocusedAsState()
     val textStyle = if (subTask.isCompleted) TextStyle(
         textDecoration = TextDecoration.LineThrough,
@@ -321,8 +320,7 @@ fun subTaskCard(
         customBasicTextField(
             textStyle = textStyle,
             modifier = modifier
-                .weight(1f)
-                .focusRequester(focusRequester),
+                .weight(1f),
             mutableInteractionSource = mutableInteractionSource,
             value = subTask.title ?: "",
             hint = R.string.input_sub_task_name,
@@ -340,13 +338,6 @@ fun subTaskCard(
         }
     }
 
-
-    //Focused the text as son as it appears on the screen
-    if (isTheLastItem) {
-        LaunchedEffect(Unit) {
-            focusRequester.requestFocus()
-        }
-    }
 }
 
 
@@ -366,59 +357,96 @@ fun taskFeatures(
                 modifier = modifier
             ) {
                 Icon(Icons.Filled.DateRange, contentDescription = null)
-                Text(text = taskDetailsUiState.dueDate ?: "", modifier.weight(1f))
-                Text(text = stringResource(id = R.string.edit))
+                Text(text = stringResource(id = R.string.due_date), modifier.weight(1f))
+                Text(text = taskDetailsUiState.dueDate ?: "")
 
             }
         }
         HorizontalDivider()
 
         Box(modifier = Modifier.clickable { setReminder() }) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = modifier
-            ) {
-                Icon(Icons.Filled.Notifications, contentDescription = null)
-                Text(
-                    text = stringResource(id = R.string.reminder), modifier.weight(1f)
-                )
-                Column {
-                    Row {
-                        if (taskDetailsUiState.reminderUiState?.eventTime != null) {
+            Column {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = modifier
+                ) {
+                    Icon(Icons.Filled.Notifications, contentDescription = null)
+                    Text(
+                        text = stringResource(id = R.string.reminder), modifier.weight(1f)
+                    )
+
+                }
+
+                taskDetailsUiState.reminderUiState?.eventTime?.let {
+                    Row(
+                        modifier = modifier.clickable { },
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+
+                        Text(
+                            text = stringResource(id = R.string.event_time),
+                            modifier = Modifier.weight(1f)
+                        )
+                        Card {
                             Text(
-                                text = stringResource(id = R.string.event_time),
-                                modifier = Modifier.padding(8.dp, 0.dp)
+                                modifier = Modifier.padding(8.dp),
+                                text = it
                             )
                         }
-                        Text(
-                            text = taskDetailsUiState.reminderUiState.eventTime
-                                ?: stringResource(id = R.string.no)
-                        )
                     }
-                    Row {
-                        if (taskDetailsUiState.reminderUiState.reminderTime != null) {
+                }
+
+                taskDetailsUiState.reminderUiState.reminderTime?.let {
+                    Row(
+                        modifier = modifier.clickable { },
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+
+                        Text(
+                            text = stringResource(id = R.string.remind_at),
+                            modifier = Modifier.weight(1f)
+                        )
+                        Card {
                             Text(
-                                text = stringResource(id = R.string.remind_at),
-                                modifier = Modifier.padding(8.dp, 0.dp)
+                                modifier = Modifier.padding(8.dp),
+                                text = it
                             )
-                            Text(text = taskDetailsUiState.reminderUiState.reminderTime)
                         }
 
                     }
                 }
-
             }
         }
         HorizontalDivider()
 
         Box(modifier = Modifier.clickable { editNotes() }) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = modifier
-            ) {
-                Icon(Icons.Filled.Menu, contentDescription = null)
-                Text(text = stringResource(id = R.string.notes), modifier.weight(1f))
-                Text(text = stringResource(id = R.string.edit))
+            Column {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = modifier
+                ) {
+                    Icon(Icons.Filled.Menu, contentDescription = null)
+                    Text(text = stringResource(id = R.string.note), modifier.weight(1f))
+                    Text(text = stringResource(id = R.string.edit))
+
+                }
+                taskDetailsUiState.attachedNote.title?.let {
+                    if (it.isNotBlank()){
+                        Text(
+                            modifier = modifier,
+                            text = it,
+                            style = TextStyle(fontWeight = FontWeight.Medium)
+                        )
+                    }
+
+                }
+                taskDetailsUiState.attachedNote.note?.let {
+                    if (it.isNotEmpty()){
+                        Text(modifier = modifier, text = it, maxLines = 5)
+                    }
+
+                }
+
 
             }
         }
@@ -433,7 +461,11 @@ fun taskFeatures(
 fun taskBodyPreview() {
     taskDetailBody(
         contentPadding = PaddingValues(20.dp),
-        taskDetailsUiState = TaskDetailsUiState(),
+        taskDetailsUiState = TaskDetailsUiState(
+            attachedNote = AttachedNote("note", "body"),
+            dueDate = "10/10/2024",
+            reminderUiState = ReminderUiState("10:00", "9:50")
+        ),
         deleteSubTask = {},
         subTaskCheckBoxOnClick = { subTaskId, state -> },
         addSubTask = {},

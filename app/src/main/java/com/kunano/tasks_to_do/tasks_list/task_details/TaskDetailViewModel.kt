@@ -2,6 +2,7 @@ package com.kunano.tasks_to_do.tasks_list.task_details
 
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.TimePickerState
 import androidx.lifecycle.SavedStateHandle
@@ -16,6 +17,7 @@ import com.kunano.tasks_to_do.core.data.TaskRepository
 import com.kunano.tasks_to_do.core.data.model.entities.LocalCategoryEntity
 import com.kunano.tasks_to_do.core.data.model.entities.LocalSubTaskEntity
 import com.kunano.tasks_to_do.core.data.model.entities.LocalTaskEntity
+import com.kunano.tasks_to_do.core.data.model.entities.Note
 import com.kunano.tasks_to_do.core.data.model.entities.Reminder
 import com.kunano.tasks_to_do.core.utils.Utils
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -52,7 +54,7 @@ class TaskDetailViewModel @Inject constructor(
         fetchTask()
     }
 
-    private fun fetchTask(){
+    private fun fetchTask() {
         viewModelScope.launch {
             val task = taskRepository.getTask(taskKey)
 
@@ -65,12 +67,20 @@ class TaskDetailViewModel @Inject constructor(
     private fun fetchTaskLive() {
         viewModelScope.launch {
             taskRepository.getTaskLive(taskKey).collect {
-                currentTask = it
-                fetCategory(it.categoryIdFk)
-                populateDueDate(Utils.localDateToMilliseconds(it.dueDate))
-                populateReminder(it.reminder)
-
+                it?.let {
+                    currentTask = it
+                    fetCategory(it.categoryIdFk)
+                    populateDueDate(Utils.localDateToMilliseconds(it.dueDate))
+                    populateReminder(it.reminder)
+                    populateAttachedNote(it.note)
+                }
             }
+        }
+    }
+
+    fun setSnackBarHostState(snackbarHostState: SnackbarHostState){
+        _taskDetailUiState.update { currentState ->
+            currentState.copy(snackBarHostState = snackbarHostState)
         }
     }
 
@@ -483,6 +493,18 @@ class TaskDetailViewModel @Inject constructor(
     private fun populateTaskTitleUiState(title: String) {
         _taskDetailUiState.update { currentState ->
             currentState.copy(taskTitle = title)
+        }
+    }
+
+    private fun populateAttachedNote(note: Note) {
+        println("note title: ${note.title}")
+        _taskDetailUiState.update { currentState ->
+            currentState.copy(
+                attachedNote = currentState.attachedNote.copy(
+                    title = note.title,
+                    note = note.content
+                )
+            )
         }
     }
 

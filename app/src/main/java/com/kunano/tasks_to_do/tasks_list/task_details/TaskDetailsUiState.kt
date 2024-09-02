@@ -16,7 +16,7 @@ data class TaskDetailsUiState(
 
     val category: String? = null,
     val reminderUiState: ReminderUiState = ReminderUiState(),
-    val attachedNote: AttachedNote? = null,
+    val attachedNote: AttachedNote = AttachedNote(),
     val dropDownMenuOptions: List<Int> = listOf(
         R.string.mark_as_done, R.string.duplicate_task, R.string.delete
     ),
