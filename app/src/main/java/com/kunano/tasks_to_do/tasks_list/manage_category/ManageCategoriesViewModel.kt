@@ -42,8 +42,7 @@ class ManageCategoriesViewModel @Inject constructor(private val categoryReposito
 
     init {
         viewModelScope.launch {
-            categoryRepository.getAll().collect {
-                println("Category: ${it.isEmpty()}")
+            categoryRepository.getAllLive().collect {
                 updateCategoryList(it)
             }
         }

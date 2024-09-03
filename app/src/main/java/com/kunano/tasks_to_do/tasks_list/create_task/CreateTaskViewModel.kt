@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.time.LocalDateTime
 import javax.inject.Inject
 
 @HiltViewModel
@@ -59,6 +60,7 @@ class CreateTaskViewModel @Inject constructor(private val taskRepository: TaskRe
             dueDate = Utils.millToLocalDateTime(dueDate),
             categoryIdFk = categoryIdFk,
             isCompleted = false,
+            createDateTime = LocalDateTime.now()
         )
 
         onChangeName("")

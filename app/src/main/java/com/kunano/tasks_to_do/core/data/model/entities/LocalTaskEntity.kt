@@ -21,8 +21,10 @@ data class LocalTaskEntity(
     var taskTitle: String,
     var dueDate: LocalDateTime,
     var isCompleted: Boolean,
+    val subTaskQuantity: Int = 0,
     @Embedded val reminder: Reminder? = null,
-    @Embedded var note: Note = Note()
+    @Embedded var note: Note = Note(),
+    val createDateTime: LocalDateTime
 )
 
 data class Reminder(val eventTime: LocalDateTime? = null,

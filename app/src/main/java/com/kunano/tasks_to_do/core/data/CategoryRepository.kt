@@ -23,8 +23,8 @@ class CategoryRepository @Inject constructor(@ApplicationContext context: Contex
     }
 
 
-    fun getAll(): Flow<List<LocalCategoryEntity>>{
-        return categoryDao.getAll()
+    fun getAllLive(): Flow<List<LocalCategoryEntity>>{
+        return categoryDao.getAllLive()
     }
 
     suspend fun getCategoryById(categoryId: Long): LocalCategoryEntity{

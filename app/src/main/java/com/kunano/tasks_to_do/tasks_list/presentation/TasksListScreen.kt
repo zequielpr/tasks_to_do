@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -21,6 +22,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material3.Card
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.Checkbox
@@ -40,28 +42,39 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.AbsoluteAlignment
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.compose.rememberNavController
 import com.kunano.tasks_to_do.R
 import com.kunano.tasks_to_do.core.data.model.entities.LocalCategoryEntity
 import com.kunano.tasks_to_do.core.data.model.entities.LocalTaskEntity
+import com.kunano.tasks_to_do.core.data.model.entities.Note
+import com.kunano.tasks_to_do.core.utils.Utils
 import com.kunano.tasks_to_do.core.utils.navigateBackButton
 import com.kunano.tasks_to_do.core.utils.searchBar
 import com.kunano.tasks_to_do.core.utils.sortByDialog
 import com.kunano.tasks_to_do.tasks_list.create_task.createTaskBottomSheet
+import java.time.LocalDateTime
+import java.time.format.FormatStyle
+import kotlin.reflect.KSuspendFunction1
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -70,7 +83,6 @@ fun TasksListScreen(
     navigate: (route: Route) -> Unit,
     viewModel: TaskListViewModel = hiltViewModel()
 ) {
-    val navController = rememberNavController()
 
     val tasksListScreedUiState by viewModel.tasksListScreedUiState.collectAsStateWithLifecycle()
 
@@ -86,8 +98,7 @@ fun TasksListScreen(
 
     Box(modifier = Modifier.fillMaxSize()) {
         Column(
-            modifier = Modifier
-                .nestedScroll(scrollBehavior.nestedScrollConnection)
+            modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection)
         ) {
             if (tasksListScreedUiState.isSearchModeActive) {
                 TopAppBar(navigationIcon = {
@@ -96,8 +107,7 @@ fun TasksListScreen(
                     )
                 }, scrollBehavior = scrollBehavior, title = {
                     searchBar(
-                        value = tasksListScreedUiState.searchingString,
-                        search = viewModel::search
+                        value = tasksListScreedUiState.searchingString, search = viewModel::search
                     )
                 })
             } else {
@@ -116,7 +126,8 @@ fun TasksListScreen(
                 changeTaskState = viewModel::updateTaskState,
                 navigateToTaskDetails = {
                     navigate(Route.TaskDetails(taskKey = it))
-                })
+                }
+            )
         }
 
         floatingActionButton(
@@ -135,9 +146,9 @@ fun TasksListScreen(
         if (tasksListScreedUiState.showSortByDialog) {
 
             sortByDialog(
-                title = tasksListScreedUiState.sortByDialogData.title,
-                selectedOption = tasksListScreedUiState.sortByDialogData.selectedOption,
-                options = tasksListScreedUiState.sortByDialogData.options,
+                title = tasksListScreedUiState.sortByDialogUiState.title,
+                selectedOption = tasksListScreedUiState.sortByDialogUiState.selectedOption,
+                options = tasksListScreedUiState.sortByDialogUiState.options,
                 selectOption = viewModel::selectSortByOption,
                 onDismiss = viewModel::hideSortByDialog
             )
@@ -171,8 +182,7 @@ fun topBar(
 
             IconButton(onClick = { dropDownMenuExpanded = true }) {
                 Icon(
-                    imageVector = Icons.Filled.MoreVert,
-                    contentDescription = null
+                    imageVector = Icons.Filled.MoreVert, contentDescription = null
                 )
             }
             dropDownMenu(
@@ -248,27 +258,19 @@ fun dropDownMenu(
 ) {
 
     DropdownMenu(expanded = isExpanded, onDismissRequest = { onDismissRequest() }) {
-        DropdownMenuItem(
-            text = { Text(text = stringResource(id = R.string.search)) },
-            onClick = {
-                activateSearchMode()
-                onDismissRequest()
-            }
-        )
-        DropdownMenuItem(
-            text = { Text(text = stringResource(id = R.string.sort_by)) },
-            onClick = {
-                showSortByDialog()
-                onDismissRequest()
-            }
-        )
-        DropdownMenuItem(
-            text = { Text(text = stringResource(id = R.string.manage_categories)) },
+        DropdownMenuItem(text = { Text(text = stringResource(id = R.string.search)) }, onClick = {
+            activateSearchMode()
+            onDismissRequest()
+        })
+        DropdownMenuItem(text = { Text(text = stringResource(id = R.string.sort_by)) }, onClick = {
+            showSortByDialog()
+            onDismissRequest()
+        })
+        DropdownMenuItem(text = { Text(text = stringResource(id = R.string.manage_categories)) },
             onClick = {
                 manageCategories()
                 onDismissRequest()
-            }
-        )
+            })
     }
 
 }
@@ -293,7 +295,7 @@ fun taskListContent(
     innerPadding: PaddingValues,
     tasksList: List<LocalTaskEntity>,
     changeTaskState: (task: LocalTaskEntity, state: Boolean) -> Unit,
-    navigateToTaskDetails: (taskId: Long) -> Unit
+    navigateToTaskDetails: (taskId: Long) -> Unit,
 ) {
 
 
@@ -310,7 +312,7 @@ fun taskListContent(
             taskCard(
                 task = task,
                 navigateToTaskDetails = navigateToTaskDetails,
-                changeTaskState = changeTaskState
+                changeTaskState = changeTaskState,
             )
         }
         item {
@@ -325,22 +327,79 @@ fun taskListContent(
 fun taskCard(
     task: LocalTaskEntity,
     changeTaskState: (task: LocalTaskEntity, state: Boolean) -> Unit,
-    navigateToTaskDetails: (taskId: Long) -> Unit
+    navigateToTaskDetails: (taskId: Long) -> Unit,
 ) {
+    val verticalAlignment = Alignment.CenterVertically
+    val iconsModifier: Modifier = Modifier.size(20.dp)
+
+
     Card(modifier = Modifier
         .fillMaxWidth()
         .clickable { navigateToTaskDetails(task.taskId!!) }) {
-        Row {
-            Checkbox(
-                checked = task.isCompleted,
+        Row(verticalAlignment = verticalAlignment) {
+            Checkbox(checked = task.isCompleted,
                 onCheckedChange = { state -> changeTaskState(task, state) })
-            Text(
-                textDecoration = if (task.isCompleted) TextDecoration.LineThrough else null,
-                modifier = Modifier.padding(14.dp),
-                text = task.taskTitle
-            )
+            Column(modifier = Modifier.padding(14.dp)) {
+                Text(
+                    textDecoration = if (task.isCompleted) TextDecoration.LineThrough else null,
+                    style = TextStyle(fontWeight = FontWeight.Medium, fontSize = 20.sp),
+                    text = task.taskTitle
+                )
+                Row(
+                    verticalAlignment = verticalAlignment,
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    //due date
+                    Text(
+                        text = Utils.localDateToString(task.dueDate, FormatStyle.SHORT).split(",")
+                            .first()
+                    )
+                    task.note?.title?.let {
+                        Icon(
+                            modifier = iconsModifier,
+                            painter = painterResource(id = R.drawable.description_24px),
+                            contentDescription = null
+                        )
+                    }
+
+
+                    if (task.subTaskQuantity > 0) {
+                        Icon(
+                            modifier = iconsModifier,
+                            painter = painterResource(id = R.drawable.tenancy_24px),
+                            contentDescription = null
+                        )
+                    }
+                    task.reminder?.eventTime?.let {
+
+                        Icon(
+                            modifier = iconsModifier,
+                            imageVector = Icons.Default.Notifications,
+                            contentDescription = null
+                        )
+                    }
+
+                }
+            }
         }
     }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun taskCardPreview() {
+    taskCard(
+        task = LocalTaskEntity(
+            taskTitle = "task name",
+            dueDate = LocalDateTime.now(),
+            isCompleted = false,
+            createDateTime = LocalDateTime.now(),
+            categoryIdFk = 1,
+            note = Note()
+        ),
+        changeTaskState = { task, state -> },
+        navigateToTaskDetails = {},
+    )
 }
 
 
@@ -357,7 +416,7 @@ fun topBarPreview() {
         manageCategories = {})
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+
 @Preview(showBackground = true)
 @Composable
 fun dropDownMenuPreview() {
@@ -368,8 +427,7 @@ fun dropDownMenuPreview() {
 @Preview(showBackground = true)
 @Composable
 fun TaskListPreview() {
-    taskListContent(
-        innerPadding = PaddingValues(20.dp),
+    taskListContent(innerPadding = PaddingValues(20.dp),
         listOf(),
         changeTaskState = { task, state -> },
         navigateToTaskDetails = {})

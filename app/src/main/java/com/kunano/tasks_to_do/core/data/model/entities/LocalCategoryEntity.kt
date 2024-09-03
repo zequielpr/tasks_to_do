@@ -7,5 +7,6 @@ import androidx.room.PrimaryKey
 @Entity
 class LocalCategoryEntity(
     @PrimaryKey(autoGenerate = true) val categoryId: Long? = null,
+    val taskQuantity: Int = 0,
     var categoryName: String
 )

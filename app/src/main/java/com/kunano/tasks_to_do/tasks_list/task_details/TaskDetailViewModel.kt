@@ -85,6 +85,9 @@ class TaskDetailViewModel @Inject constructor(
     }
 
 
+
+
+
     fun selectDropDownMenuAction(action: Int) {
 
         viewModelScope.launch {
@@ -317,7 +320,6 @@ class TaskDetailViewModel @Inject constructor(
                             dueDate = dueDate
                         )
                     )
-                    println("update due date")
 
                     //Update reminder date if it exists
                     it.reminder?.let { reminder ->

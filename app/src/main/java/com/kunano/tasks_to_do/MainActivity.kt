@@ -13,6 +13,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.BottomAppBarDefaults
 import androidx.compose.material3.BottomAppBarScrollBehavior
@@ -68,7 +69,7 @@ class MainActivity : ComponentActivity() {
                     mutableStateOf(SnackbarHostState())
                 }
                 Scaffold(
-                    snackbarHost = { SnackbarHost(hostState = snackBarState)},
+                    snackbarHost = { SnackbarHost(hostState = snackBarState, modifier = Modifier.imePadding())},
                     bottomBar = {
                         bottomBar(
                             navController = navController,

@@ -6,7 +6,7 @@ import com.kunano.tasks_to_do.core.data.model.entities.LocalCategoryEntity
 import com.kunano.tasks_to_do.core.data.model.entities.LocalTaskEntity
 
 data class TasksListScreenUiState(
-    val sortByDialogData: SortByDialogData = SortByDialogData(),
+    val sortByDialogUiState: SortByDialogData = SortByDialogData(),
     val searchingString: String = "",
     val showSortByDialog: Boolean = false,
     val isSearchModeActive: Boolean = false,

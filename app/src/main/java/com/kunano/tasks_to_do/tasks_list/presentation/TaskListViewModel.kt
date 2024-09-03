@@ -1,36 +1,24 @@
 package com.kunano.tasks_to_do.tasks_list.presentation
 
-import Route
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.navigation.NavController
-import androidx.navigation.toRoute
+import com.kunano.tasks_to_do.R
 import com.kunano.tasks_to_do.core.data.CategoryRepository
 import com.kunano.tasks_to_do.core.data.SubTaskRepository
 import com.kunano.tasks_to_do.core.data.TaskRepository
 import com.kunano.tasks_to_do.core.data.model.entities.LocalCategoryEntity
 import com.kunano.tasks_to_do.core.data.model.entities.LocalTaskEntity
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.drop
-import kotlinx.coroutines.flow.filter
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.shareIn
-import kotlinx.coroutines.flow.single
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class TaskListViewModel @Inject constructor(
-    private val taskRepository: TaskRepository, private val categoryRepository: CategoryRepository
+    private val taskRepository: TaskRepository,
+    private val categoryRepository: CategoryRepository,
+    private val subTaskRepository: SubTaskRepository
 ) : ViewModel() {
 
     //Intern updates
@@ -41,6 +29,7 @@ class TaskListViewModel @Inject constructor(
 
 
     private var currentTaskList: List<LocalTaskEntity> = listOf()
+
     init {
 
         fetchTasksList()
@@ -50,7 +39,7 @@ class TaskListViewModel @Inject constructor(
 
     private fun fetchCategoryList() {
         viewModelScope.launch {
-            categoryRepository.getAll().collect {
+            categoryRepository.getAllLive().collect {
                 updateCategoriesList(it)
             }
         }
@@ -78,10 +67,75 @@ class TaskListViewModel @Inject constructor(
     }
 
 
+    fun checkIfItHasSubTasks(task: LocalTaskEntity) {
+
+    }
+
+
     fun selectSortByOption(option: Int) {
+
+        when (option) {
+            R.string.due_date_and_time -> {
+                sortTaskByDueDateAndTime()
+            }
+
+            R.string.task_create_time_latest_at_the_top -> {
+                sortTasksByCreateTimeLatestTop()
+            }
+
+            R.string.task_create_time_latest_at_the_bottom -> {
+                sortTasksByCreateTimeLatestBottom()
+            }
+
+            R.string.alphabetical_a_z -> {
+                sortTasksByAlphaAZ()
+            }
+
+            R.string.alphabetical_z_a -> {
+                sortTasksByAlphaZA()
+            }
+        }
+
         updateSortBySelectedOption(option = option)
         hideSortByDialog()
     }
+
+
+    private var sortedList: List<LocalTaskEntity> = listOf()
+
+    private fun sortTaskByDueDateAndTime() {
+        sortedList =
+            _tasksListScreenUiState.value.tasksList.sortedByDescending { task -> task.dueDate }
+                .reversed()
+        updateTasksList(sortedList)
+    }
+
+    private fun sortTasksByCreateTimeLatestBottom() {
+        sortedList =
+            _tasksListScreenUiState.value.tasksList.sortedByDescending { task -> task.createDateTime }
+                .reversed()
+        updateTasksList(sortedList)
+    }
+
+    private fun sortTasksByCreateTimeLatestTop() {
+        sortedList =
+            _tasksListScreenUiState.value.tasksList.sortedByDescending { task -> task.createDateTime }
+        updateTasksList(sortedList)
+    }
+
+    private fun sortTasksByAlphaAZ() {
+        sortedList =
+            _tasksListScreenUiState.value.tasksList.sortedByDescending { task -> task.taskTitle }
+                .reversed()
+        updateTasksList(sortedList)
+    }
+
+    private fun sortTasksByAlphaZA() {
+        sortedList =
+            _tasksListScreenUiState.value.tasksList.sortedByDescending { task -> task.taskTitle }
+        updateTasksList(sortedList)
+    }
+
 
     fun showSortByDialog() {
         updateShowSortByDialogState(show = true)
@@ -95,15 +149,28 @@ class TaskListViewModel @Inject constructor(
 
     fun search(searchingString: String) {
         updateSearchingString(searchingString)
+        val selectedCategory = _tasksListScreenUiState.value.selectedCategory
+        val filteredList = currentTaskList.filter { task ->
+            task.taskTitle.contains(
+                searchingString.trim()
+            )
+        }
+
+        updateTasksList(filteredList)
     }
 
 
     fun activateSearchMode() {
+
         updateSearModeState(isActive = true)
+
     }
 
     fun deactivateSearchMode() {
         updateSearModeState(isActive = false)
+        search("")
+        val selectedCategory = _tasksListScreenUiState.value.selectedCategory
+        filterByTaskCategory(selectedCategory)
     }
 
 
@@ -122,16 +189,23 @@ class TaskListViewModel @Inject constructor(
         if (category?.categoryId == null) {
             updateTasksList(currentTaskList)
         } else {
-            val filteredTaskList = currentTaskList.filter { task -> task.categoryIdFk == category.categoryId }
+            val filteredTaskList =
+                currentTaskList.filter { task -> task.categoryIdFk == category.categoryId }
             updateTasksList(filteredTaskList)
         }
+
+        selectSortByOption(option = _tasksListScreenUiState.value.sortByDialogUiState.selectedOption)
     }
 
 
     private fun updateSortBySelectedOption(option: Int) {
-        val newState = _tasksListScreenUiState.value.sortByDialogData
+        val newState = _tasksListScreenUiState.value.sortByDialogUiState
         _tasksListScreenUiState.update { currentState ->
-            currentState.copy(sortByDialogData = currentState.sortByDialogData.copy(selectedOption = option))
+            currentState.copy(
+                sortByDialogUiState = currentState.sortByDialogUiState.copy(
+                    selectedOption = option
+                )
+            )
         }
     }
 

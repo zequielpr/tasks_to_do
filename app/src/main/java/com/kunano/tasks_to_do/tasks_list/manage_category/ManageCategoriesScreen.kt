@@ -154,7 +154,7 @@ fun categoryCard(
                 .padding(10.dp, 20.dp)
                 .weight(1f), text = category.categoryName
         )
-        Text(modifier = modifier.padding(10.dp, 0.dp), text = "0")
+        Text(modifier = modifier.padding(10.dp, 0.dp), text = category.taskQuantity.toString())
 
         IconButton(onClick = { isDropDownMenuExpanded = true }) {
             Icon(Icons.Default.MoreVert, contentDescription = null)
@@ -205,7 +205,7 @@ fun categoryDropDownMenu(
 @Composable
 fun categoryCardPreview() {
     categoryCard(
-        category = LocalCategoryEntity(null, "category name"),
+        category = LocalCategoryEntity(null, 0, "category name" ),
         edit = { },
         delete = { },
     )

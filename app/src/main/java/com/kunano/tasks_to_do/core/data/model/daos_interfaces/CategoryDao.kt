@@ -6,13 +6,14 @@ import androidx.room.Insert
 import androidx.room.Query
 import androidx.room.Update
 import com.kunano.tasks_to_do.core.data.model.entities.LocalCategoryEntity
-import com.kunano.tasks_to_do.core.data.model.entities.LocalSubTaskEntity
 import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface CategoryDao {
-    @Query("SELECT * FROM localcategoryentity")
-    fun getAll(): Flow<List<LocalCategoryEntity>>
+    @Query("SELECT categoryId, categoryName, " +
+            "(select count(taskId) from task_table where categoryIdFk = categoryId) as  taskQuantity " +
+            "FROM localcategoryentity")
+    fun getAllLive(): Flow<List<LocalCategoryEntity>>
 
     @Query("SELECT * FROM localcategoryentity WHERE categoryId in (:categoryId)")
     suspend fun getCategoryById(categoryId: Long): LocalCategoryEntity

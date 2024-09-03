@@ -304,6 +304,14 @@ fun subTaskCard(
     val mutableInteractionSource by remember { mutableStateOf(MutableInteractionSource()) }
 
 
+    val focusRequester by remember {
+        mutableStateOf(FocusRequester())
+    }
+
+    //Focus the last item of the list
+    LaunchedEffect(key1 = isTheLastItem) {
+        focusRequester.requestFocus()
+    }
 
     //Collect text field state
     val isTextFieldFocused by mutableInteractionSource.collectIsFocusedAsState()
@@ -320,7 +328,8 @@ fun subTaskCard(
         customBasicTextField(
             textStyle = textStyle,
             modifier = modifier
-                .weight(1f),
+                .weight(1f)
+                .focusRequester(focusRequester),
             mutableInteractionSource = mutableInteractionSource,
             value = subTask.title ?: "",
             hint = R.string.input_sub_task_name,

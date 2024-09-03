@@ -3,6 +3,7 @@ package com.kunano.tasks_to_do.core.data.model.entities
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.PrimaryKey
+import java.time.LocalDateTime
 
 
 @Entity(
