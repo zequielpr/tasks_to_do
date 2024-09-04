@@ -41,6 +41,11 @@
     <string name="task_deleted">Task deleted</string>
     <string name="task_duplicated">Task duplicated</string>
     <string name="undo">Undo</string>
+    <string name="not_reminder">Not reminder</string>
+    <string name="seven_pm">19:00</string>
+    <string name="twelve_pm">00:00</string>
+    <string name="one_pm">13:00</string>
+    <string name="yes">Yes</string>
 
 
 

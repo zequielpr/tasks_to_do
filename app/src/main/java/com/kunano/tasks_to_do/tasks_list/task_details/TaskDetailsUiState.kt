@@ -1,11 +1,13 @@
 package com.kunano.tasks_to_do.tasks_list.task_details
 
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.TimePickerState
 import com.kunano.tasks_to_do.R
 import com.kunano.tasks_to_do.core.data.model.entities.LocalSubTaskEntity
 
 
-data class TaskDetailsUiState(
+data class TaskDetailsUiState @OptIn(ExperimentalMaterial3Api::class) constructor(
 
     val taskTitle: String = "",
     val subTasksInputInputState: List<LocalSubTaskEntity> = listOf(),
@@ -13,6 +15,17 @@ data class TaskDetailsUiState(
     val showTimePicker: Boolean = false,
     val dueDate: String? = null,
     val dueDateLong: Long? = null,
+    val eventTimePickerState: TimePickerState = TimePickerState(
+        0,
+        0,
+        true
+    ),
+    val reminderTimePickerState: TimePickerState = TimePickerState(
+        0,
+        0,
+        true
+    ),
+    val showReminderTimePicker: Boolean = false,
 
     val category: String? = null,
     val reminderUiState: ReminderUiState = ReminderUiState(),

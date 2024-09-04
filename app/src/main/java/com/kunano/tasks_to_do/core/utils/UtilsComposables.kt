@@ -89,12 +89,10 @@ fun basicDropDownMenu(
 
     DropdownMenu(expanded = isMenuExpanded, onDismissRequest = { isMenuExpanded = false }) {
         optionsList.fastForEach {
-            DropdownMenuItem(
-                text = { Text(text = stringResource(id = it)) },
-                onClick = {
-                    selectOption(it)
-                    isMenuExpanded = false
-                })
+            DropdownMenuItem(text = { Text(text = stringResource(id = it)) }, onClick = {
+                selectOption(it)
+                isMenuExpanded = false
+            })
         }
     }
 
@@ -139,8 +137,7 @@ fun dateModifier(
     if (datePickerToBeShown) {
         datePicker(selectedDateInMilliseconds,
             onDismiss = hideDatePicker,
-            pickDate = { dateInMilli -> setDate(dateInMilli) }
-        )
+            pickDate = { dateInMilli -> setDate(dateInMilli) })
     }
 }
 
@@ -195,23 +192,17 @@ fun categoryAssistChip(
             createCategory = showCreateCategoryDialog
         )
 
-        AssistChip(
-            trailingIcon = {
-                if (trailingIcon != null) Icon(
-                    imageVector = trailingIcon,
-                    contentDescription = null
+        AssistChip(trailingIcon = {
+            if (trailingIcon != null) Icon(
+                imageVector = trailingIcon, contentDescription = null
+            )
+        }, shape = ShapeDefaults.Medium, onClick = { menuExpanded = true }, label = {
+            Text(
+                text = selectedCategoryName ?: stringResource(
+                    id = R.string.no_category
                 )
-            },
-            shape = ShapeDefaults.Medium,
-            onClick = { menuExpanded = true },
-            label = {
-                Text(
-                    text = selectedCategoryName
-                        ?: stringResource(
-                            id = R.string.no_category
-                        )
-                )
-            })
+            )
+        })
     }
 }
 
@@ -230,18 +221,16 @@ fun CategoriesDropDownMenu(
         expanded = menuExpanded,
         onDismissRequest = onDismiss
     ) {
-        DropdownMenuItem(
-            text = {
-                Text(
-                    color = MaterialTheme.colorScheme.primary,
-                    text = stringResource(id = R.string.no_category)
-                )
-            },
-            onClick = {
-                selectItem(null)
-                onDismiss()
+        DropdownMenuItem(text = {
+            Text(
+                color = MaterialTheme.colorScheme.primary,
+                text = stringResource(id = R.string.no_category)
+            )
+        }, onClick = {
+            selectItem(null)
+            onDismiss()
 
-            })
+        })
 
         itemsList.fastForEach {
             DropdownMenuItem(text = { Text(text = it.categoryName) }, onClick = {
@@ -252,28 +241,26 @@ fun CategoriesDropDownMenu(
         }
 
 
-        DropdownMenuItem(
-            text = {
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        Icons.Default.Add,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary
-                    )
-                    Text(
-                        color = MaterialTheme.colorScheme.primary,
-                        text = stringResource(id = R.string.create_category)
-                    )
-                }
-            },
-            onClick = {
-                createCategory()
-                onDismiss()
+        DropdownMenuItem(text = {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    Icons.Default.Add,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary
+                )
+                Text(
+                    color = MaterialTheme.colorScheme.primary,
+                    text = stringResource(id = R.string.create_category)
+                )
+            }
+        }, onClick = {
+            createCategory()
+            onDismiss()
 
-            })
+        })
 
 
     }
@@ -320,13 +307,13 @@ fun createCategoryDialogContent(
         shape = RoundedCornerShape(16.dp),
     ) {
         Column(
-            modifier = modifier
-                .padding(10.dp)
+            modifier = modifier.padding(10.dp)
         ) {
             OutlinedTextField(
                 label = { Text(text = stringResource(id = R.string.category_name)) },
                 modifier = modifier,
-                value = createCategoryUiState.categoryName, onValueChange = onValueChange
+                value = createCategoryUiState.categoryName,
+                onValueChange = onValueChange
             )
             if (createCategoryUiState.showErrorMessage) {
                 Text(
@@ -334,10 +321,9 @@ fun createCategoryDialogContent(
                     text = stringResource(id = R.string.introduce_category_name)
                 )
             }
-            ElevatedButton(
-                modifier = Modifier
-                    .align(alignment = Alignment.End)
-                    .padding(0.dp, 10.dp),
+            ElevatedButton(modifier = Modifier
+                .align(alignment = Alignment.End)
+                .padding(0.dp, 10.dp),
                 onClick = {
                     createCategory()
                 }) {
@@ -360,9 +346,7 @@ fun showToast(message: Int) {
 
 @Composable
 fun searchBar(
-    value: String,
-    search: (value: String) -> Unit,
-    modifier: Modifier = Modifier
+    value: String, search: (value: String) -> Unit, modifier: Modifier = Modifier
 ) {
     Card(
         modifier = modifier.height(40.dp),
@@ -381,7 +365,9 @@ fun searchBar(
                 hint = R.string.search,
                 modifier = Modifier
                     .padding(14.dp, 8.dp)
-                    .weight(1f), value = value, onValueChange = search
+                    .weight(1f),
+                value = value,
+                onValueChange = search
             )
 
             Box {
@@ -420,8 +406,7 @@ fun customBasicTextField(
 
     ) {
 
-    BasicTextField(
-        modifier = modifier,
+    BasicTextField(modifier = modifier,
         textStyle = textStyle ?: TextStyle(fontSize = 20.sp),
         singleLine = singleLine ?: true,
         value = value,
@@ -435,15 +420,13 @@ fun customBasicTextField(
                 )
             }
             it()
-        }
-    )
+        })
 }
 
 
 @Composable
 fun navigateBackButton(
-    size: Dp = 40.dp,
-    navigateBack: () -> Unit
+    size: Dp = 40.dp, navigateBack: () -> Unit
 ) {
     IconButton(onClick = navigateBack) {
         Icon(
@@ -479,20 +462,16 @@ fun sortByDialog(
                 LazyColumn {
                     items(options) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            RadioButton(
-                                selected = it == radioButtonState,
+                            RadioButton(selected = it == radioButtonState,
                                 onClick = { radioButtonState = it })
-                            Text(
-                                modifier = Modifier
-                                    .clickable { radioButtonState = it }
-                                    .weight(1f),
-                                text = stringResource(id = it)
-                            )
+                            Text(modifier = Modifier
+                                .clickable { radioButtonState = it }
+                                .weight(1f),
+                                text = stringResource(id = it))
                         }
                     }
                 }
-                TextButton(
-                    modifier = Modifier.align(Alignment.End),
+                TextButton(modifier = Modifier.align(Alignment.End),
                     onClick = { selectOption(radioButtonState) }) {
                     Text(text = stringResource(id = R.string.select))
                 }
@@ -514,8 +493,7 @@ fun sortByDialogPreview() {
         R.string.alphabetical_z_a
     )
 
-    sortByDialog(
-        title = R.string.sort_tasks_by,
+    sortByDialog(title = R.string.sort_tasks_by,
         selectedOption = R.string.due_date_and_time,
         options = options,
         selectOption = {},
@@ -533,8 +511,7 @@ fun basicAlertDialog(
 ) {
 
 
-    AlertDialog(
-        title = { Text(text = stringResource(id = title)) },
+    AlertDialog(title = { Text(text = stringResource(id = title)) },
         text = { Text(text = stringResource(id = body)) },
 
         onDismissRequest = dismiss,
@@ -556,34 +533,62 @@ fun basicAlertDialog(
 fun dialTimePicker(
     onConfirm: (timePickerState: TimePickerState) -> Unit,
     onDismiss: () -> Unit,
+    onNotReminder: () -> Unit,
+    timePickerState: TimePickerState
 ) {
-    val currentTime = Calendar.getInstance()
+    var timePickerState by remember {
+        mutableStateOf(timePickerState)
+    }
+    val horizontalArrangement = Arrangement.spacedBy(14.dp)
+    AlertDialog(onDismissRequest = { /*TODO*/ }, confirmButton = {
+        ElevatedButton(onClick = { onConfirm(timePickerState) }) {
+            Text(text = stringResource(id = R.string.confirm))
+        }
+    }, dismissButton = {
+        ElevatedButton(onClick = onDismiss) {
+            Text(text = stringResource(id = R.string.cancel))
+        }
+    }, text = {
+        Column(horizontalAlignment = Alignment.End) {
+            TimePicker(
+                state = timePickerState,
+            )
 
-    val timePickerState = rememberTimePickerState(
-        initialHour = currentTime.get(Calendar.HOUR_OF_DAY),
-        initialMinute = currentTime.get(Calendar.MINUTE),
-        is24Hour = true,
-    )
+            Row(horizontalArrangement = horizontalArrangement) {
 
-    AlertDialog(
-        onDismissRequest = { /*TODO*/ },
-        confirmButton = {
-            ElevatedButton(onClick = { onConfirm(timePickerState) }) {
-                Text(text = stringResource(id = R.string.confirm))
+
+                ElevatedButton(onClick = {
+                    timePickerState = TimePickerState (initialHour =
+                        13, initialMinute = 0, is24Hour = true)
+                }) {
+                    Text(text = stringResource(id = R.string.one_pm))
+                }
+
+
+                ElevatedButton(onClick = {  timePickerState = TimePickerState (initialHour =
+                0, initialMinute = 0, is24Hour = true) }) {
+                    Text(text = stringResource(id = R.string.twelve_pm))
+                }
             }
-        },
-        dismissButton = {
-            ElevatedButton(onClick = onDismiss) {
-                Text(text = stringResource(id = R.string.cancel))
+
+            Row(horizontalArrangement = horizontalArrangement, modifier = Modifier.padding(top = 8.dp)) {
+
+                ElevatedButton(onClick = onNotReminder) {
+                    Text(text = stringResource(id = R.string.not_reminder))
+                }
+                ElevatedButton(onClick = {  timePickerState = TimePickerState (initialHour =
+                19, initialMinute = 0, is24Hour = true)}) {
+                    Text(text = stringResource(id = R.string.seven_pm))
+                }
+
             }
-        },
-        text = {
-            Column(horizontalAlignment = Alignment.End) {
-                TimePicker(
-                    state = timePickerState,
-                )
-            }
-        })
+
+            Box(modifier = Modifier.padding(vertical = 10.dp))
+            HorizontalDivider()
+
+
+        }
+    })
 
 }
 
@@ -591,9 +596,12 @@ fun dialTimePicker(
 @Preview
 @Composable
 fun timePickerPreview() {
-    dialTimePicker(onConfirm = { /*TODO*/ }) {
-
-    }
+    dialTimePicker(
+        onConfirm = { /*TODO*/ },
+        onDismiss = {},
+        timePickerState = TimePickerState(initialHour = 0, initialMinute = 0, is24Hour = true),
+        onNotReminder = {}
+    )
 }
 
 
@@ -621,8 +629,7 @@ fun searchBarPreview() {
 @Preview(showBackground = true)
 @Composable
 fun datePickerPreview() {
-    dateModifier(
-        datePickerToBeShown = false,
+    dateModifier(datePickerToBeShown = false,
         selectedDateInMilliseconds = Utils.getCurrentTimeInMilliseconds(),
         selectedDay = 10,
         showDatePicker = { /*TODO*/ },
@@ -634,8 +641,7 @@ fun datePickerPreview() {
 @Preview(showBackground = true)
 @Composable
 fun createCategoryDialogPreview() {
-    createCategoryDialogContent(
-        ManageCategoriesScreenState(),
+    createCategoryDialogContent(ManageCategoriesScreenState(),
         createCategory = {},
         buttonTitle = R.string.save,
         onValueChange = {})

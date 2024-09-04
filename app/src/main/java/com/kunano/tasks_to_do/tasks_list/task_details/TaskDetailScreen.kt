@@ -28,9 +28,9 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.TimePickerState
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TopAppBarScrollBehavior
@@ -47,6 +47,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -83,7 +84,11 @@ fun TaskDetailScreen(
     modifier: Modifier = Modifier
 ) {
     val taskKey = viewModel.taskKey
-    val taskDetailsUiState by viewModel.taskDetail.collectAsStateWithLifecycle(TaskDetailsUiState(snackBarHostState = snackbarHostState))
+    val taskDetailsUiState by viewModel.taskDetail.collectAsStateWithLifecycle(
+        TaskDetailsUiState(
+            snackBarHostState = snackbarHostState
+        )
+    )
     val manageCategoriesScreenState by manageCategoriesViewModel.manageCategoriesScreenState.collectAsStateWithLifecycle()
     viewModel.setSnackBarHostState(snackbarHostState)
 
@@ -94,7 +99,6 @@ fun TaskDetailScreen(
 
     val topAppBarScrollBehavior =
         TopAppBarDefaults.enterAlwaysScrollBehavior(rememberTopAppBarState())
-
 
 
     Column(
@@ -133,9 +137,10 @@ fun TaskDetailScreen(
                     deleteSubTask = viewModel::deleteSubTaskField,
                     subTaskCheckBoxOnClick = viewModel::updateSubTaskState,
                     onTyping = viewModel::onSubTaskInputChanges,
-                    pickDueDate = viewModel::showDatePicker,
-                    setReminder = viewModel::showTimePicker,
-                    editNotes = { navigate(Route.NoteScreen(taskKey = taskKey)) }
+                    showDueDatePicker = viewModel::showDatePicker,
+                    showEventAndReminderTimePicker = viewModel::showTimePicker,
+                    editNotes = { navigate(Route.NoteScreen(taskKey = taskKey)) },
+                    showRemindAtTimePicker = viewModel::showRemindAtTimePicker
                 )
             }
         }
@@ -159,12 +164,27 @@ fun TaskDetailScreen(
             )
         }
 
+
+
+
         if (taskDetailsUiState.showTimePicker) {
             dialTimePicker(
-                onConfirm = viewModel::setTimeReminder,
-                onDismiss = viewModel::hideTimePicker
+                onConfirm = viewModel::setEventAndReminderDateTime,
+                onDismiss = viewModel::hideTimePicker,
+                timePickerState = taskDetailsUiState.eventTimePickerState,
+                onNotReminder = viewModel::deleteTimeReminder
             )
         }
+
+        if (taskDetailsUiState.showReminderTimePicker) {
+            dialTimePicker(
+                onConfirm = viewModel::setRemindAtDateTime,
+                onDismiss = viewModel::hideRemindAtTimePicker,
+                timePickerState = taskDetailsUiState.reminderTimePickerState,
+                onNotReminder = viewModel::deleteTimeReminder
+            )
+        }
+
 
     }
 
@@ -210,8 +230,9 @@ fun taskDetailBody(
     subTaskCheckBoxOnClick: (subTask: LocalSubTaskEntity, state: Boolean) -> Unit,
     deleteSubTask: (subTask: LocalSubTaskEntity) -> Unit,
     addSubTask: () -> Unit,
-    pickDueDate: () -> Unit,
-    setReminder: () -> Unit,
+    showDueDatePicker: () -> Unit,
+    showEventAndReminderTimePicker: () -> Unit,
+    showRemindAtTimePicker: () -> Unit,
     editNotes: () -> Unit,
     onTyping: (subTask: LocalSubTaskEntity, value: String) -> Unit,
     modifier: Modifier = Modifier.padding(contentPadding)
@@ -230,9 +251,10 @@ fun taskDetailBody(
             )
             taskFeatures(
                 taskDetailsUiState = taskDetailsUiState,
-                pickDueDate = pickDueDate,
-                setReminder = setReminder,
+                showDueDatePicker = showDueDatePicker,
+                showEventAndReminderTimePicker = showEventAndReminderTimePicker,
                 editNotes = editNotes,
+                showRemindAtTimePicker = showRemindAtTimePicker
             )
         }
     }
@@ -353,14 +375,15 @@ fun subTaskCard(
 @Composable
 fun taskFeatures(
     taskDetailsUiState: TaskDetailsUiState,
-    pickDueDate: () -> Unit,
-    setReminder: () -> Unit,
+    showDueDatePicker: () -> Unit,
+    showEventAndReminderTimePicker: () -> Unit,
+    showRemindAtTimePicker: () -> Unit,
     editNotes: () -> Unit,
     modifier: Modifier = Modifier.padding(10.dp),
 ) {
     Column() {
         HorizontalDivider()
-        Box(modifier = Modifier.clickable { pickDueDate() }) {
+        Box(modifier = Modifier.clickable { showDueDatePicker() }) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = modifier
@@ -373,7 +396,7 @@ fun taskFeatures(
         }
         HorizontalDivider()
 
-        Box(modifier = Modifier.clickable { setReminder() }) {
+        Box(modifier = Modifier.clickable { showEventAndReminderTimePicker() }) {
             Column {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -383,12 +406,21 @@ fun taskFeatures(
                     Text(
                         text = stringResource(id = R.string.reminder), modifier.weight(1f)
                     )
+                    Card {
+                        if (taskDetailsUiState.reminderUiState.eventTime == null &&
+                            taskDetailsUiState.reminderUiState.reminderTime == null) {
+                            Text(modifier = modifier, text = stringResource(id = R.string.no))
+                        }else{
+                            Text(modifier = modifier, text = stringResource(id = R.string.yes))
+                        }
+                    }
 
                 }
 
-                taskDetailsUiState.reminderUiState?.eventTime?.let {
+
+                taskDetailsUiState.reminderUiState.eventTime?.let {
                     Row(
-                        modifier = modifier.clickable { },
+                        modifier = modifier.clickable { showEventAndReminderTimePicker() },
                         verticalAlignment = Alignment.CenterVertically
                     ) {
 
@@ -407,7 +439,7 @@ fun taskFeatures(
 
                 taskDetailsUiState.reminderUiState.reminderTime?.let {
                     Row(
-                        modifier = modifier.clickable { },
+                        modifier = modifier.clickable { showRemindAtTimePicker() },
                         verticalAlignment = Alignment.CenterVertically
                     ) {
 
@@ -434,13 +466,15 @@ fun taskFeatures(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = modifier
                 ) {
-                    Icon(Icons.Filled.Menu, contentDescription = null)
+                    Icon(painter = painterResource(id = R.drawable.description_24px), contentDescription = null)
                     Text(text = stringResource(id = R.string.note), modifier.weight(1f))
-                    Text(text = stringResource(id = R.string.edit))
+                    Card{
+                        Text(modifier = modifier, text = stringResource(id = R.string.edit))
+                    }
 
                 }
                 taskDetailsUiState.attachedNote.title?.let {
-                    if (it.isNotBlank()){
+                    if (it.isNotBlank()) {
                         Text(
                             modifier = modifier,
                             text = it,
@@ -450,7 +484,7 @@ fun taskFeatures(
 
                 }
                 taskDetailsUiState.attachedNote.note?.let {
-                    if (it.isNotEmpty()){
+                    if (it.isNotEmpty()) {
                         Text(modifier = modifier, text = it, maxLines = 5)
                     }
 
@@ -479,9 +513,10 @@ fun taskBodyPreview() {
         subTaskCheckBoxOnClick = { subTaskId, state -> },
         addSubTask = {},
         onTyping = { s, v -> },
-        setReminder = {},
-        pickDueDate = {},
-        editNotes = {}
+        showEventAndReminderTimePicker = {},
+        showDueDatePicker = {},
+        editNotes = {},
+        showRemindAtTimePicker = {}
     )
 }
 

@@ -24,12 +24,12 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import java.time.format.FormatStyle
 import java.util.UUID
 import javax.inject.Inject
 
+@OptIn(ExperimentalMaterial3Api::class)
 @HiltViewModel
 class TaskDetailViewModel @Inject constructor(
     private val savedStateHandle: SavedStateHandle,
@@ -78,14 +78,12 @@ class TaskDetailViewModel @Inject constructor(
         }
     }
 
-    fun setSnackBarHostState(snackbarHostState: SnackbarHostState){
+
+    fun setSnackBarHostState(snackbarHostState: SnackbarHostState) {
         _taskDetailUiState.update { currentState ->
             currentState.copy(snackBarHostState = snackbarHostState)
         }
     }
-
-
-
 
 
     fun selectDropDownMenuAction(action: Int) {
@@ -234,6 +232,14 @@ class TaskDetailViewModel @Inject constructor(
     }
 
 
+    fun showRemindAtTimePicker() {
+        updateShowReminderTimePicker(show = true)
+    }
+
+    fun hideRemindAtTimePicker() {
+        updateShowReminderTimePicker(show = false)
+    }
+
     fun showTimePicker() {
         updateShowTimePicker(show = true)
     }
@@ -279,7 +285,43 @@ class TaskDetailViewModel @Inject constructor(
     }
 
 
+    fun deleteTimeReminder() {
+        viewModelScope.launch {
+            currentTask?.let {
+                taskRepository.updateTask(it.copy(reminder = null))
+            }
+            hideRemindAtTimePicker()
+            hideTimePicker()
+        }
+    }
+
+
     //Update subtask in the source of truth
+
+    fun setRemindAtDateTime(timePickerState: TimePickerState) {
+
+        currentTask?.let {
+            val reminderDateTime =
+                it.reminder?.reminderTime?.withHour(timePickerState.hour)
+                    ?.withMinute(timePickerState.minute)
+
+            viewModelScope.launch {
+                taskRepository.updateTask(
+                    it.copy(
+                        reminder = it.reminder?.copy(
+                            reminderTime = reminderDateTime
+                        )
+                    )
+                )
+
+                hideRemindAtTimePicker()
+            }
+        }
+
+
+    }
+
+
     private fun addSubTask(subTaskEntity: LocalSubTaskEntity) {
         viewModelScope.launch {
             subTaskRepository.insertSubTask(subTaskEntity)
@@ -343,8 +385,8 @@ class TaskDetailViewModel @Inject constructor(
         }
     }
 
-    @OptIn(ExperimentalMaterial3Api::class)
-    fun setTimeReminder(timePickerState: TimePickerState) {
+
+    fun setEventAndReminderDateTime(timePickerState: TimePickerState) {
         val hour = timePickerState.hour
         val minute = timePickerState.minute
 
@@ -372,24 +414,47 @@ class TaskDetailViewModel @Inject constructor(
 
     private fun populateReminder(reminder: Reminder?) {
 
-        reminder?.let {
-            val eventTime =
-                Utils.localDateToString(dateTime = it.eventTime!!, FormatStyle.SHORT).split(",")
-                    .last()
-            val remindAt =
-                Utils.localDateToString(dateTime = it.reminderTime!!, FormatStyle.SHORT).split(",")
-                    .last()
+        if (reminder == null) {
 
-            _taskDetailUiState.update { currentState ->
-                currentState.copy(
-                    reminderUiState = currentState.reminderUiState.copy(
-                        eventTime = eventTime, reminderTime = remindAt
-                    )
+        }
+        val eventTimePickerState = TimePickerState(
+            initialHour = reminder?.eventTime?.hour ?: 0,
+            initialMinute = reminder?.eventTime?.minute ?: 0,
+            is24Hour = true
+        )
+
+        val remindAtTimePickerState = TimePickerState(
+            initialHour = reminder?.reminderTime?.hour ?: 0,
+            initialMinute = reminder?.reminderTime?.minute ?: 0,
+            is24Hour = true
+        )
+
+        val eventTime: String? = reminder?.let {
+            Utils.localDateToString(dateTime = it.eventTime!!, FormatStyle.SHORT).split(",")
+                .last()
+        }
+        val remindAt: String? = reminder?.let {
+            Utils.localDateToString(dateTime = it.reminderTime!!, FormatStyle.SHORT).split(",")
+                .last()
+        }
+
+        _taskDetailUiState.update { currentState ->
+            currentState.copy(
+                eventTimePickerState = eventTimePickerState,
+                reminderTimePickerState = remindAtTimePickerState,
+                reminderUiState = currentState.reminderUiState.copy(
+                    eventTime = eventTime, reminderTime = remindAt
                 )
-            }
+            )
         }
 
 
+    }
+
+    private fun updateShowReminderTimePicker(show: Boolean) {
+        _taskDetailUiState.update { currentState ->
+            currentState.copy(showReminderTimePicker = show)
+        }
     }
 
     private fun updateShowTimePicker(show: Boolean) {
