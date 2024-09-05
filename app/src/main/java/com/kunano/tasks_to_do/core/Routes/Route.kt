@@ -1,5 +1,3 @@
-
-
 import androidx.annotation.StringRes
 import com.kunano.tasks_to_do.R
 import kotlinx.serialization.Serializable
@@ -7,6 +5,10 @@ import kotlinx.serialization.Serializable
 @Serializable
 sealed class Route(val route: String, @StringRes val resourceId: Int) {
 
+    data object DeepLinksDirection {
+        val taskDetails: String =
+            "https://www.example.com/{route}/{resourceId}/{taskKey}"
+    }
 
     /** inside taskList nested graph **/
     @Serializable
@@ -14,10 +16,10 @@ sealed class Route(val route: String, @StringRes val resourceId: Int) {
 
     /** inside taskList nested graph **/
     @Serializable
-    data class TaskDetails(val taskKey: String) : Route("TaskDetails", R.string.task_details)
+    data class TaskDetails(val taskKey: Long) : Route("TaskDetails", R.string.task_details)
 
     @Serializable
-    data object ManageCategories:  Route("ManageCategories", R.string.manage_categories)
+    data object ManageCategories : Route("ManageCategories", R.string.manage_categories)
 
 
     /** inside stats nested graph **/
@@ -26,7 +28,7 @@ sealed class Route(val route: String, @StringRes val resourceId: Int) {
 
 
     @Serializable
-    data class NoteScreen(val taskKey: String) : Route("NoteScreen", R.string.notes)
+    data class NoteScreen(val taskKey: Long) : Route("NoteScreen", R.string.note)
 
 
 }

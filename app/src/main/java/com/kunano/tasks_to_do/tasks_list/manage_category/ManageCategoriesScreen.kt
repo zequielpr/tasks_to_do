@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -37,6 +38,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kunano.tasks_to_do.R
+import com.kunano.tasks_to_do.core.data.model.entities.LocalCategoryEntity
 import com.kunano.tasks_to_do.core.utils.basicAlertDialog
 import com.kunano.tasks_to_do.core.utils.createCategoryDialog
 import com.kunano.tasks_to_do.core.utils.navigateBackButton
@@ -70,15 +72,15 @@ fun ManageCategoriesScreen(
                 scrollBehavior = scrollBehavior,
                 navigationIcon = { navigateBackButton(navigateBack = navigateBack) },
                 actions = {
-                    IconButton(onClick = viewModel::showAddAcategoryDialog) {
+                    IconButton(onClick = viewModel::showAddCategoryDialog) {
                         Icon(Icons.Default.Add, contentDescription = null)
                     }
                 },
                 title = { Text(text = stringResource(id = R.string.manage_categories)) })
 
             categoryList(
-                categoriesList = list, paddingValues,
-                edit = viewModel::edit,
+                categoriesList = manageCategoriesScreenState.categoryList, paddingValues,
+                edit = viewModel::requestCategoryEditing,
                 delete = viewModel::requestCategoryDeleting,
             )
         }
@@ -108,10 +110,10 @@ fun ManageCategoriesScreen(
 
 @Composable
 fun categoryList(
-    categoriesList: List<String>,
+    categoriesList: List<LocalCategoryEntity>,
     paddingValues: PaddingValues,
-    edit: (categoryId: String) -> Unit,
-    delete: (categoryId: String) -> Unit,
+    edit: (category: LocalCategoryEntity) -> Unit,
+    delete: (category: LocalCategoryEntity) -> Unit,
 ) {
 
     val columState = rememberLazyListState();
@@ -123,9 +125,9 @@ fun categoryList(
         contentPadding = paddingValues,
         verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
-        items(20) { categoryName ->
+        items(categoriesList){
             categoryCard(
-                categoryName = "categoryName $categoryName",
+                category = it,
                 edit = edit,
                 delete = delete
             )
@@ -135,9 +137,9 @@ fun categoryList(
 
 @Composable
 fun categoryCard(
-    categoryName: String,
-    edit: (categoryId: String) -> Unit,
-    delete: (categoryId: String) -> Unit,
+    category: LocalCategoryEntity,
+    edit: (category: LocalCategoryEntity) -> Unit,
+    delete: (category: LocalCategoryEntity) -> Unit,
     modifier: Modifier = Modifier
 ) {
 
@@ -150,9 +152,9 @@ fun categoryCard(
         Text(
             modifier = modifier
                 .padding(10.dp, 20.dp)
-                .weight(1f), text = categoryName
+                .weight(1f), text = category.categoryName
         )
-        Text(modifier = modifier.padding(10.dp, 0.dp), text = "0")
+        Text(modifier = modifier.padding(10.dp, 0.dp), text = category.taskQuantity.toString())
 
         IconButton(onClick = { isDropDownMenuExpanded = true }) {
             Icon(Icons.Default.MoreVert, contentDescription = null)
@@ -160,7 +162,7 @@ fun categoryCard(
 
         categoryDropDownMenu(
             isExpanded = isDropDownMenuExpanded,
-            categoryId = categoryName,
+            category = category,
             edit = edit,
             delete = delete,
             onDismiss = { isDropDownMenuExpanded = false },
@@ -172,9 +174,9 @@ fun categoryCard(
 @Composable
 fun categoryDropDownMenu(
     isExpanded: Boolean,
-    categoryId: String,
-    edit: (categoryId: String) -> Unit,
-    delete: (categoryId: String) -> Unit,
+    category: LocalCategoryEntity,
+    edit: (category: LocalCategoryEntity) -> Unit,
+    delete: (category: LocalCategoryEntity) -> Unit,
     onDismiss: () -> Unit
 ) {
 
@@ -186,14 +188,14 @@ fun categoryDropDownMenu(
             text = { Text(text = stringResource(id = R.string.edit)) },
             onClick = {
                 onDismiss()
-                edit(categoryId)
+                edit(category)
             })
 
         DropdownMenuItem(
             text = { Text(text = stringResource(id = R.string.delete)) },
             onClick = {
                 onDismiss()
-                delete(categoryId)
+                delete(category)
             })
     }
 }
@@ -203,7 +205,7 @@ fun categoryDropDownMenu(
 @Composable
 fun categoryCardPreview() {
     categoryCard(
-        categoryName = "Example",
+        category = LocalCategoryEntity(null, 0, "category name" ),
         edit = { },
         delete = { },
     )

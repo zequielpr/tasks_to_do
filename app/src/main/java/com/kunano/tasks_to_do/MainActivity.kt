@@ -3,6 +3,7 @@ package com.kunano.tasks_to_do
 import BottomNavBarRoutes
 import Route
 import android.app.Application
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -13,6 +14,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.BottomAppBarDefaults
 import androidx.compose.material3.BottomAppBarScrollBehavior
@@ -20,9 +22,13 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
@@ -32,12 +38,14 @@ import androidx.navigation.NavController
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
-import androidx.navigation.toRoute
+import androidx.navigation.navDeepLink
+import com.kunano.tasks_to_do.core.notification_manager.CustomNotificationManager
 import com.kunano.tasks_to_do.tasks_list.presentation.TasksListScreen
 import com.kunano.tasks_to_do.core.theme.Tasks_to_doTheme
 import com.kunano.tasks_to_do.stats.presentation.StatsScreen
@@ -46,22 +54,38 @@ import com.kunano.tasks_to_do.tasks_list.task_details.TaskDetailScreen
 import com.kunano.tasks_to_do.tasks_list.task_details.notes.NoteScreen
 import dagger.hilt.android.AndroidEntryPoint
 import dagger.hilt.android.HiltAndroidApp
+import android.net.Uri
+import androidx.compose.ui.res.painterResource
 
 val graphsRoutesList = listOf(BottomNavBarRoutes.TasksList, BottomNavBarRoutes.Stats)
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+
+
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+
         WindowCompat.setDecorFitsSystemWindows(window, false)
+        CustomNotificationManager.createNotificationChannel(this)
 
         setContent {
             Tasks_to_doTheme {
                 val bottomAppBarScrollBehavior = BottomAppBarDefaults.exitAlwaysScrollBehavior()
                 val navController = rememberNavController()
+                val snackBarState by remember {
+                    mutableStateOf(SnackbarHostState())
+
+                }
                 Scaffold(
+                    snackbarHost = {
+                        SnackbarHost(
+                            hostState = snackBarState,
+                            modifier = Modifier.imePadding()
+                        )
+                    },
                     bottomBar = {
                         bottomBar(
                             navController = navController,
@@ -73,7 +97,8 @@ class MainActivity : ComponentActivity() {
                             navController = navController,
                             bottomAppBarScrollBehavior = bottomAppBarScrollBehavior,
                             innerPadding = padding,
-                            modifier = Modifier.nestedScroll(bottomAppBarScrollBehavior.nestedScrollConnection)
+                            snackBarHostState = snackBarState,
+                            modifier = Modifier.nestedScroll(bottomAppBarScrollBehavior.nestedScrollConnection),
                         )
                     }
                 )
@@ -88,11 +113,12 @@ class MainActivity : ComponentActivity() {
 fun navHost(
     navController: NavHostController,
     bottomAppBarScrollBehavior: BottomAppBarScrollBehavior,
+    snackBarHostState: SnackbarHostState,
     innerPadding: PaddingValues,
-    modifier: Modifier
+    modifier: Modifier,
 ) {
 
-    val  enterTransition =slideInVertically(
+    val enterTransition = slideInVertically(
         initialOffsetY = { 1000 }, // Start the slide from the right
         animationSpec = tween(durationMillis = 300) // Customize the animation speed
     ) + fadeIn(animationSpec = tween(durationMillis = 200))
@@ -100,7 +126,7 @@ fun navHost(
         enterTransition = { EnterTransition.None },
         exitTransition = { ExitTransition.None },
         popExitTransition = { ExitTransition.None },
-        popEnterTransition = {EnterTransition.None},
+        popEnterTransition = { EnterTransition.None },
         modifier = modifier,
         navController = navController,
         startDestination = BottomNavBarRoutes.TasksList,
@@ -113,10 +139,26 @@ fun navHost(
                     navigate = { navigate(navController, it) }
                 )
             }
-            composable<Route.TaskDetails> {
-                val args = it.toRoute<Route.TaskDetails>()
+            composable<Route.TaskDetails>(
+                deepLinks = listOf(navDeepLink {
+                    action = Intent.ACTION_VIEW
+                    uriPattern = Route.DeepLinksDirection.taskDetails
+                    argument("route") {
+                        type = NavType.StringType
+                        defaultValue = ""
+                    }
+                    argument("resourceId") {
+                        type = NavType.IntType
+                        defaultValue = -1
+                    }
+                    argument("taskKey") {
+                        type = NavType.LongType
+                        defaultValue = -1
+                    }
+                }),
+            ) {
                 TaskDetailScreen(
-                    taskKey = args.taskKey,
+                    snackbarHostState = snackBarHostState,
                     contentPadding = innerPadding,
                     bottomAppBarScrollBehavior = bottomAppBarScrollBehavior,
                     navigate = { route -> navigate(navController, route) },
@@ -147,7 +189,6 @@ fun navHost(
 
 
     }
-
 }
 
 
@@ -168,10 +209,7 @@ fun bottomBar(navController: NavController, scrollBehavior: BottomAppBarScrollBe
         graphsRoutesList.forEach { screen ->
             NavigationBarItem(
                 icon = {
-                    Icon(
-                        screen.icon,
-                        contentDescription = null
-                    )
+                    Icon(painter = painterResource(id = screen.icon), contentDescription = screen.route)
                 },
                 label = { Text(stringResource(screen.label)) },
                 selected = currentDestination?.hierarchy?.any {

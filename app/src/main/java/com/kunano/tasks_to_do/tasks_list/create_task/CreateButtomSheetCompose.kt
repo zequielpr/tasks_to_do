@@ -27,25 +27,33 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kunano.tasks_to_do.R
+import com.kunano.tasks_to_do.core.data.model.entities.LocalCategoryEntity
 import com.kunano.tasks_to_do.core.utils.Utils
 import com.kunano.tasks_to_do.core.utils.categoryAssistChip
 import com.kunano.tasks_to_do.core.utils.createCategoryDialog
 import com.kunano.tasks_to_do.core.utils.dateModifier
 import com.kunano.tasks_to_do.core.utils.showToast
 import com.kunano.tasks_to_do.tasks_list.manage_category.ManageCategoriesScreenState
+import com.kunano.tasks_to_do.tasks_list.manage_category.ManageCategoriesViewModel
 
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun createTaskBottomSheet(
-    onDismiss: () -> Unit, viewModel: CreateTaskViewModel = hiltViewModel()
+    onDismiss: () -> Unit,
+    viewModel: CreateTaskViewModel = hiltViewModel(),
+    manageCategoriesViewModel: ManageCategoriesViewModel = hiltViewModel()
 ) {
 
     val createTaskUiState by viewModel.createTaskUiState.collectAsStateWithLifecycle()
-    val manageCategoriesState by viewModel.manageCategoriesScreenState.collectAsStateWithLifecycle()
+    val manageCategoriesState by manageCategoriesViewModel.manageCategoriesScreenState.collectAsStateWithLifecycle()
     val showIntroduceTaskNameToastState by viewModel.showIntroduceTaskNameToast.collectAsStateWithLifecycle(
         initialValue = false
     )
+
+    manageCategoriesViewModel.newCategoryReceiver = {
+        viewModel.selectTaskCategory(it)
+    }
 
     val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
@@ -69,10 +77,10 @@ fun createTaskBottomSheet(
             hideDropDownMenu = viewModel::hideCategoryDropDownMenu,
             selectCategory = viewModel::selectTaskCategory,
             createTask = viewModel::createTask,
-            onCategoryNameChange = viewModel::onCategoryNameChange,
-            showCreateCategoryDialog = viewModel::showCreateCategoryDialog,
-            onCategoryDialogDismiss = viewModel::hideCreateCategoryDialog,
-            createCategory = viewModel::createCategory,
+            onCategoryNameChange = manageCategoriesViewModel::onChangeCategoryName,
+            showCreateCategoryDialog = manageCategoriesViewModel::showCreateOrUpdateTaskDialog,
+            onCategoryDialogDismiss = manageCategoriesViewModel::hideCreateOrUpdateTaskDialog,
+            createCategory = manageCategoriesViewModel::saveChanges,
 
             )
     }
@@ -90,7 +98,7 @@ fun bottomSheetContent(
     hideDatePicker: () -> Unit,
     setDate: (dateInMilli: Long?) -> Unit,
     hideDropDownMenu: () -> Unit,
-    selectCategory: (category: String?) -> Unit,
+    selectCategory: (category: LocalCategoryEntity?) -> Unit,
     createTask: () -> Unit,
     onCategoryNameChange: (category: String) -> Unit,
     showCreateCategoryDialog: () -> Unit,
@@ -122,10 +130,10 @@ fun bottomSheetContent(
                     onDismiss = onCategoryDialogDismiss,
                     createCategory = createCategory
                 )
-                
+
                 categoryAssistChip(
                     categoriesList = manageCategoriesScreenState.categoryList,
-                    selectedCategory = createTaskUiState.selectedCategoryInBottomSheet,
+                    selectedCategoryName = createTaskUiState.selectedCategoryInBottomSheet?.categoryName,
                     selectItem = selectCategory,
                     showCreateCategoryDialog = showCreateCategoryDialog
                 )

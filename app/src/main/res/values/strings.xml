@@ -20,12 +20,16 @@
     <string name="task_create_time_latest_at_the_bottom">Task create time (latest at the bottom)</string>
     <string name="alphabetical_a_z">Alphabetical (A-Z)</string>
     <string name="alphabetical_z_a">Alphabetical (Z-A)</string>
-    <string name="time_and_reminder">Time and reminder</string>
-    <string name="notes">Notes</string>
+    <string name="reminder">Reminder</string>
+    <string name="note">Note</string>
     <string name="note_title">Note title</string>
     <string name="note_content">Note content</string>
     <string name="completed_tasks">Completed tasks</string>
     <string name="pending_tasks">Pending tasks</string>
+    <string name="no">No</string>
+    <string name="event_time">Event time:</string>
+    <string name="remind_at">Remind at</string>
+    <string name="last_modified">Last modified:</string>
 
     <string name="select">Select</string>
     <string name="input_sub_task_name">Input subTask name</string>
@@ -33,6 +37,15 @@
     <string name="mark_as_done">Mark as done</string>
     <string name="duplicate_task">Duplicate task</string>
     <string name="add_sub_task">Add subtask</string>
+    <string name="task_marked_as_done">Task marked as done</string>
+    <string name="task_deleted">Task deleted</string>
+    <string name="task_duplicated">Task duplicated</string>
+    <string name="undo">Undo</string>
+    <string name="not_reminder">Not reminder</string>
+    <string name="seven_pm">19:00</string>
+    <string name="twelve_pm">00:00</string>
+    <string name="one_pm">13:00</string>
+    <string name="yes">Yes</string>
 
 
 
@@ -51,4 +64,7 @@
     <string name="manage_categories">Manage categories</string>
     <string name="create_task">Create task</string>
     <string name="create_category">Create category</string>
+    <string name="channel_name">task notification channel</string>
+    <string name="channel_description">channel for tasks notification</string>
+    <string name="expected_today_at">expected today at\n</string>
 </resources>

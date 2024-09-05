@@ -3,15 +3,21 @@ package com.kunano.tasks_to_do.tasks_list.task_details.notes
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -28,8 +34,6 @@ fun NoteScreen(
     paddingValues: PaddingValues,
     noteViewModel: NoteViewModel = hiltViewModel()
 ) {
-
-    //noteViewModel.fetchNote(taskKey)
     val noteScreenState by noteViewModel.noteScreenState.collectAsStateWithLifecycle()
 
     Column {
@@ -39,8 +43,9 @@ fun NoteScreen(
         noteScreenContent(
             paddingValues = paddingValues,
             noteScreenState = noteScreenState,
-            onContentChange = {},
-            onTitleChanges = {})
+            onContentChange = noteViewModel::onContentChange,
+            onTitleChanges = noteViewModel::onTitleChange
+        )
     }
 
 
@@ -68,6 +73,30 @@ fun noteScreenContent(
             modifier = Modifier
                 .padding(paddingValues)
         ) {
+
+            noteScreenState.lastModified?.let {
+                val textStyle = TextStyle(
+                    fontStyle = FontStyle.Italic,
+                    fontSize = 12.sp,
+                    textDecoration = TextDecoration.Underline
+                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(0.dp, 20.dp),
+                ) {
+                    Text(
+                        style = textStyle,
+                        modifier = Modifier.padding(end = 10.dp),
+                        text = stringResource(id = R.string.last_modified)
+                    )
+                    Text(
+
+                        style = textStyle,
+                        text = it
+                    )
+                }
+            }
+
             Card(
                 modifier = Modifier
                     .padding(0.dp, 0.dp, 0.dp, 20.dp)
@@ -93,7 +122,7 @@ fun noteScreenContent(
 fun noteScreenContentPreview() {
     noteScreenContent(
         paddingValues = PaddingValues(0.dp),
-        noteScreenState = NoteScreenState("Title", "Content"),
+        noteScreenState = NoteScreenState("Title", "Content", lastModified = "12/12/2024"),
         onTitleChanges = {},
         onContentChange = {})
 }

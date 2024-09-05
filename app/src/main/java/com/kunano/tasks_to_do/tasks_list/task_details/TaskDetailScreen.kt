@@ -21,13 +21,16 @@ import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.sharp.Clear
 import androidx.compose.material.icons.sharp.Menu
 import androidx.compose.material3.BottomAppBarScrollBehavior
+import androidx.compose.material3.Card
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.TimePickerState
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TopAppBarScrollBehavior
@@ -42,10 +45,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -53,6 +59,8 @@ import androidx.compose.ui.util.fastForEach
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kunano.tasks_to_do.R
+import com.kunano.tasks_to_do.core.data.model.entities.LocalCategoryEntity
+import com.kunano.tasks_to_do.core.data.model.entities.LocalSubTaskEntity
 import com.kunano.tasks_to_do.core.utils.basicDropDownMenu
 import com.kunano.tasks_to_do.core.utils.categoryAssistChip
 import com.kunano.tasks_to_do.core.utils.createCategoryDialog
@@ -66,8 +74,8 @@ import com.kunano.tasks_to_do.tasks_list.manage_category.ManageCategoriesViewMod
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TaskDetailScreen(
-    taskKey: String,
     contentPadding: PaddingValues,
+    snackbarHostState: SnackbarHostState,
     bottomAppBarScrollBehavior: BottomAppBarScrollBehavior,
     navigate: (route: Route) -> Unit,
     navigateBack: () -> Unit,
@@ -75,12 +83,23 @@ fun TaskDetailScreen(
     manageCategoriesViewModel: ManageCategoriesViewModel = hiltViewModel(),
     modifier: Modifier = Modifier
 ) {
-    val taskDetailsUiState by viewModel.taskDetail.collectAsStateWithLifecycle()
+    val taskKey = viewModel.taskKey
+    val taskDetailsUiState by viewModel.taskDetail.collectAsStateWithLifecycle(
+        TaskDetailsUiState(
+            snackBarHostState = snackbarHostState
+        )
+    )
     val manageCategoriesScreenState by manageCategoriesViewModel.manageCategoriesScreenState.collectAsStateWithLifecycle()
+    viewModel.setSnackBarHostState(snackbarHostState)
 
+    //Set the the recently created category
+    manageCategoriesViewModel.newCategoryReceiver = {
+        viewModel.updateTaskCategory(it)
+    }
 
     val topAppBarScrollBehavior =
         TopAppBarDefaults.enterAlwaysScrollBehavior(rememberTopAppBarState())
+
 
     Column(
         modifier
@@ -92,20 +111,23 @@ fun TaskDetailScreen(
             manageCategoriesScreenState = manageCategoriesScreenState,
             navigateBack = navigateBack,
             selectAction = viewModel::selectDropDownMenuAction,
-            setCategory = viewModel::setTaskCategory,
-            showCreateCategoryDialog = manageCategoriesViewModel::showAddAcategoryDialog
+            setCategory = viewModel::updateTaskCategory,
+            showCreateCategoryDialog = manageCategoriesViewModel::showAddCategoryDialog
         )
         LazyColumn(
             modifier = modifier
+                .padding(20.dp, 0.dp)
                 .nestedScroll(bottomAppBarScrollBehavior.nestedScrollConnection)
                 .nestedScroll(topAppBarScrollBehavior.nestedScrollConnection)
         ) {
             item {
-                Text(
-                    modifier = Modifier.padding(20.dp, 0.dp),
-                    text = "taskTitle",
-                    style = TextStyle(fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                customBasicTextField(
+                    modifier = modifier,
+                    value = taskDetailsUiState.taskTitle,
+                    hint = R.string.task_details,
+                    onValueChange = viewModel::updateTaskTitle
                 )
+
 
 
                 taskDetailBody(
@@ -115,9 +137,10 @@ fun TaskDetailScreen(
                     deleteSubTask = viewModel::deleteSubTaskField,
                     subTaskCheckBoxOnClick = viewModel::updateSubTaskState,
                     onTyping = viewModel::onSubTaskInputChanges,
-                    pickDueDate = viewModel::showDatePicker,
-                    setReminder = viewModel::showTimePicker,
-                    editNotes = { navigate(Route.NoteScreen(taskKey = taskKey))}
+                    showDueDatePicker = viewModel::showDatePicker,
+                    showEventAndReminderTimePicker = viewModel::showTimePicker,
+                    editNotes = { navigate(Route.NoteScreen(taskKey = taskKey)) },
+                    showRemindAtTimePicker = viewModel::showRemindAtTimePicker
                 )
             }
         }
@@ -135,14 +158,33 @@ fun TaskDetailScreen(
 
         if (taskDetailsUiState.showDueDatePicker) {
             datePicker(
-                selectedDate = taskDetailsUiState.dueDate,
+                selectedDate = taskDetailsUiState.dueDateLong,
                 onDismiss = viewModel::hideDatePicker,
-                pickDate = viewModel::setDueDate)
+                pickDate = viewModel::setDueDate
+            )
         }
 
-        if (taskDetailsUiState.showTimePicker){
-            dialTimePicker(onConfirm = {}, onDismiss = viewModel::hideTimePicker)
+
+
+
+        if (taskDetailsUiState.showTimePicker) {
+            dialTimePicker(
+                onConfirm = viewModel::setEventAndReminderDateTime,
+                onDismiss = viewModel::hideTimePicker,
+                timePickerState = taskDetailsUiState.eventTimePickerState,
+                onNotReminder = viewModel::deleteTimeReminder
+            )
         }
+
+        if (taskDetailsUiState.showReminderTimePicker) {
+            dialTimePicker(
+                onConfirm = viewModel::setRemindAtDateTime,
+                onDismiss = viewModel::hideRemindAtTimePicker,
+                timePickerState = taskDetailsUiState.reminderTimePickerState,
+                onNotReminder = viewModel::deleteTimeReminder
+            )
+        }
+
 
     }
 
@@ -157,7 +199,7 @@ fun taskDetailTopAppBar(
     manageCategoriesScreenState: ManageCategoriesScreenState,
     navigateBack: () -> Unit,
     selectAction: (action: Int) -> Unit,
-    setCategory: (category: String?) -> Unit,
+    setCategory: (category: LocalCategoryEntity?) -> Unit,
     showCreateCategoryDialog: () -> Unit
 
 ) {
@@ -166,7 +208,7 @@ fun taskDetailTopAppBar(
         title = {
             categoryAssistChip(
                 categoriesList = manageCategoriesScreenState.categoryList,
-                selectedCategory = taskDetailsUiState.category,
+                selectedCategoryName = taskDetailsUiState.category,
                 trailingIcon = Icons.Filled.ArrowDropDown,
                 selectItem = setCategory,
                 showCreateCategoryDialog = showCreateCategoryDialog
@@ -185,20 +227,21 @@ fun taskDetailTopAppBar(
 fun taskDetailBody(
     contentPadding: PaddingValues,
     taskDetailsUiState: TaskDetailsUiState,
-    subTaskCheckBoxOnClick: (subTaskId: String, state: Boolean) -> Unit,
-    deleteSubTask: (subTaskInputState: SubTaskInputState) -> Unit,
+    subTaskCheckBoxOnClick: (subTask: LocalSubTaskEntity, state: Boolean) -> Unit,
+    deleteSubTask: (subTask: LocalSubTaskEntity) -> Unit,
     addSubTask: () -> Unit,
-    pickDueDate: () -> Unit,
-    setReminder: () -> Unit,
+    showDueDatePicker: () -> Unit,
+    showEventAndReminderTimePicker: () -> Unit,
+    showRemindAtTimePicker: () -> Unit,
     editNotes: () -> Unit,
-    onTyping: (subTaskInputState: SubTaskInputState, value: String) -> Unit,
+    onTyping: (subTask: LocalSubTaskEntity, value: String) -> Unit,
     modifier: Modifier = Modifier.padding(contentPadding)
 ) {
 
     Box(
         modifier = modifier
     ) {
-        Column(modifier = Modifier.padding(20.dp, 0.dp)) {
+        Column {
             subTasks(
                 taskDetailsUiState = taskDetailsUiState,
                 subTaskCheckBoxOnClick = subTaskCheckBoxOnClick,
@@ -208,9 +251,10 @@ fun taskDetailBody(
             )
             taskFeatures(
                 taskDetailsUiState = taskDetailsUiState,
-                pickDueDate = pickDueDate,
-                setReminder = setReminder,
+                showDueDatePicker = showDueDatePicker,
+                showEventAndReminderTimePicker = showEventAndReminderTimePicker,
                 editNotes = editNotes,
+                showRemindAtTimePicker = showRemindAtTimePicker
             )
         }
     }
@@ -219,22 +263,22 @@ fun taskDetailBody(
 @Composable
 fun subTasks(
     taskDetailsUiState: TaskDetailsUiState,
-    subTaskCheckBoxOnClick: (subTaskId: String, state: Boolean) -> Unit,
-    deleteSubTask: (subTaskInputState: SubTaskInputState) -> Unit,
+    subTaskCheckBoxOnClick: (subTask: LocalSubTaskEntity, state: Boolean) -> Unit,
+    deleteSubTask: (subTask: LocalSubTaskEntity) -> Unit,
     addSubTask: () -> Unit,
-    onTyping: (subTaskInputState: SubTaskInputState, value: String) -> Unit,
+    onTyping: (subTask: LocalSubTaskEntity, value: String) -> Unit,
     modifier: Modifier = Modifier
         .padding(0.dp, 10.dp)
         .fillMaxWidth()
 ) {
     Column {
         var index = 0
-        taskDetailsUiState.subTasksInputInputState.toList().fastForEach {
+        taskDetailsUiState.subTasksInputInputState.fastForEach {
             key(it.subTaskId) {
                 println("sub task's input: $index")
                 index++
                 subTaskCard(
-                    subTaskInputState = it,
+                    subTask = it,
                     isTheLastItem = index == taskDetailsUiState.subTasksInputInputState.size, //Focus the last item
                     subTaskCheckBoxOnClick = subTaskCheckBoxOnClick,
                     deleteSubTask = deleteSubTask,
@@ -243,38 +287,6 @@ fun subTasks(
             }
 
         }
-        taskDetailsUiState.subTasks.fastForEach {
-            /* subTaskCard(
-                subTask = it,
-                 isTheLastItem = false,
-                 markSubtaskAsDone = {},
-                 deleteSubTask = {},
-                 onTyping = onTyping
-             )*/
-        }
-        /*Card(shape = RoundedCornerShape(20.dp)) {
-            LazyColumn(
-                modifier = Modifier
-                    .heightIn(max = 190.dp, min = 0.dp)
-                    .padding(15.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                items(taskDetailsUiState.subTasksInput) {
-                    subTaskCard(
-                        subtaskName = "sub $it", isSubTaskDone = false,
-                        markSubtaskAsDone = markSubtaskAsDone, deleteSubTask = deleteSubTask
-                    )
-                }
-
-                items(0) {
-                    subTaskCard(
-                        subtaskName = "sub $it", isSubTaskDone = false,
-                        markSubtaskAsDone = markSubtaskAsDone, deleteSubTask = deleteSubTask
-                    )
-                }
-            }
-        }*/
-
 
         Box(modifier = modifier.fillMaxWidth()) {
             Row(
@@ -304,39 +316,49 @@ fun subTasks(
 
 @Composable
 fun subTaskCard(
-    subTaskInputState: SubTaskInputState,
+    subTask: LocalSubTaskEntity,
     isTheLastItem: Boolean,
-    subTaskCheckBoxOnClick: (subTaskId: String, state: Boolean) -> Unit,
-    deleteSubTask: (subTaskInputState: SubTaskInputState) -> Unit,
-    onTyping: (subTaskInputState: SubTaskInputState, value: String) -> Unit,
+    subTaskCheckBoxOnClick: (subTask: LocalSubTaskEntity, state: Boolean) -> Unit,
+    deleteSubTask: (subTask: LocalSubTaskEntity) -> Unit,
+    onTyping: (subTask: LocalSubTaskEntity, value: String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val mutableInteractionSource by remember { mutableStateOf(MutableInteractionSource()) }
 
-    // Create a FocusRequester object
-    val focusRequester = remember { FocusRequester() }
 
+    val focusRequester by remember {
+        mutableStateOf(FocusRequester())
+    }
 
-    //Focus on the last item
+    //Focus the last item of the list
+    LaunchedEffect(key1 = isTheLastItem) {
+        focusRequester.requestFocus()
+    }
 
+    //Collect text field state
     val isTextFieldFocused by mutableInteractionSource.collectIsFocusedAsState()
+    val textStyle = if (subTask.isCompleted) TextStyle(
+        textDecoration = TextDecoration.LineThrough,
+        color = Color.Gray
+    ) else null
 
     Row(verticalAlignment = Alignment.CenterVertically) {
         Checkbox(
-            checked = subTaskInputState.isSubTaskDone,
-            onCheckedChange = { subTaskCheckBoxOnClick(subTaskInputState.subTaskId, it) })
+            checked = subTask.isCompleted,
+            onCheckedChange = { subTaskCheckBoxOnClick(subTask, it) })
 
         customBasicTextField(
+            textStyle = textStyle,
             modifier = modifier
                 .weight(1f)
                 .focusRequester(focusRequester),
             mutableInteractionSource = mutableInteractionSource,
-            value = subTaskInputState.subTaskName ?: "",
+            value = subTask.title ?: "",
             hint = R.string.input_sub_task_name,
-            onValueChange = { onTyping(subTaskInputState, it) })
+            onValueChange = { onTyping(subTask, it) })
 
         IconButton(
-            onClick = { deleteSubTask(subTaskInputState) },
+            onClick = { deleteSubTask(subTask) },
             enabled = isTextFieldFocused
         ) {
             if (isTextFieldFocused) {
@@ -347,53 +369,129 @@ fun subTaskCard(
         }
     }
 
-
-    //Focused the text as son as it appears on the screen
-    if (isTheLastItem) {
-        LaunchedEffect(Unit) {
-            focusRequester.requestFocus()
-        }
-    }
 }
 
 
 @Composable
 fun taskFeatures(
     taskDetailsUiState: TaskDetailsUiState,
-    pickDueDate: () -> Unit,
-    setReminder: () -> Unit,
+    showDueDatePicker: () -> Unit,
+    showEventAndReminderTimePicker: () -> Unit,
+    showRemindAtTimePicker: () -> Unit,
     editNotes: () -> Unit,
-    modifier: Modifier = Modifier.padding(24.dp),
+    modifier: Modifier = Modifier.padding(10.dp),
 ) {
     Column() {
         HorizontalDivider()
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.clickable { pickDueDate() }) {
-            Icon(Icons.Filled.DateRange, contentDescription = null)
-            Text(text = stringResource(id = R.string.due_date), modifier.weight(1f))
-            Text(text = "dueDate")
+        Box(modifier = Modifier.clickable { showDueDatePicker() }) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = modifier
+            ) {
+                Icon(Icons.Filled.DateRange, contentDescription = null)
+                Text(text = stringResource(id = R.string.due_date), modifier.weight(1f))
+                Text(text = taskDetailsUiState.dueDate ?: "")
 
+            }
         }
         HorizontalDivider()
 
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.clickable { setReminder() }) {
-            Icon(Icons.Filled.Notifications, contentDescription = null)
-            Text(text = stringResource(id = R.string.time_and_reminder), modifier.weight(1f))
-            Text(text = "event time")
+        Box(modifier = Modifier.clickable { showEventAndReminderTimePicker() }) {
+            Column {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = modifier
+                ) {
+                    Icon(Icons.Filled.Notifications, contentDescription = null)
+                    Text(
+                        text = stringResource(id = R.string.reminder), modifier.weight(1f)
+                    )
+                    Card {
+                        if (taskDetailsUiState.reminderUiState.eventTime == null &&
+                            taskDetailsUiState.reminderUiState.reminderTime == null) {
+                            Text(modifier = modifier, text = stringResource(id = R.string.no))
+                        }else{
+                            Text(modifier = modifier, text = stringResource(id = R.string.yes))
+                        }
+                    }
 
+                }
+
+
+                taskDetailsUiState.reminderUiState.eventTime?.let {
+                    Row(
+                        modifier = modifier.clickable { showEventAndReminderTimePicker() },
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+
+                        Text(
+                            text = stringResource(id = R.string.event_time),
+                            modifier = Modifier.weight(1f)
+                        )
+                        Card {
+                            Text(
+                                modifier = Modifier.padding(8.dp),
+                                text = it
+                            )
+                        }
+                    }
+                }
+
+                taskDetailsUiState.reminderUiState.reminderTime?.let {
+                    Row(
+                        modifier = modifier.clickable { showRemindAtTimePicker() },
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+
+                        Text(
+                            text = stringResource(id = R.string.remind_at),
+                            modifier = Modifier.weight(1f)
+                        )
+                        Card {
+                            Text(
+                                modifier = Modifier.padding(8.dp),
+                                text = it
+                            )
+                        }
+
+                    }
+                }
+            }
         }
         HorizontalDivider()
 
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.clickable { editNotes() }) {
-            Icon(Icons.Filled.Menu, contentDescription = null)
-            Text(text = stringResource(id = R.string.notes), modifier.weight(1f))
-            Text(text = stringResource(id = R.string.edit))
+        Box(modifier = Modifier.clickable { editNotes() }) {
+            Column {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = modifier
+                ) {
+                    Icon(painter = painterResource(id = R.drawable.description_24px), contentDescription = null)
+                    Text(text = stringResource(id = R.string.note), modifier.weight(1f))
+                    Card{
+                        Text(modifier = modifier, text = stringResource(id = R.string.edit))
+                    }
 
+                }
+                taskDetailsUiState.attachedNote.title?.let {
+                    if (it.isNotBlank()) {
+                        Text(
+                            modifier = modifier,
+                            text = it,
+                            style = TextStyle(fontWeight = FontWeight.Medium)
+                        )
+                    }
+
+                }
+                taskDetailsUiState.attachedNote.note?.let {
+                    if (it.isNotEmpty()) {
+                        Text(modifier = modifier, text = it, maxLines = 5)
+                    }
+
+                }
+
+
+            }
         }
 
         HorizontalDivider()
@@ -406,24 +504,21 @@ fun taskFeatures(
 fun taskBodyPreview() {
     taskDetailBody(
         contentPadding = PaddingValues(20.dp),
-        taskDetailsUiState = TaskDetailsUiState(),
+        taskDetailsUiState = TaskDetailsUiState(
+            attachedNote = AttachedNote("note", "body"),
+            dueDate = "10/10/2024",
+            reminderUiState = ReminderUiState("10:00", "9:50")
+        ),
         deleteSubTask = {},
         subTaskCheckBoxOnClick = { subTaskId, state -> },
         addSubTask = {},
         onTyping = { s, v -> },
-        setReminder = {},
-        pickDueDate = {},
-        editNotes = {}
+        showEventAndReminderTimePicker = {},
+        showDueDatePicker = {},
+        editNotes = {},
+        showRemindAtTimePicker = {}
     )
 }
 
-
-@Preview(showBackground = true)
-@Composable
-fun taskFeaturesPreview() {
-    taskFeatures(taskDetailsUiState = TaskDetailsUiState(), setReminder = {},
-        pickDueDate = {},
-        editNotes = {})
-}
 
 

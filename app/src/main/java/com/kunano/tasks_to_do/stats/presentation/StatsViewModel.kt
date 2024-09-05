@@ -2,14 +2,17 @@ package com.kunano.tasks_to_do.stats.presentation
 
 import androidx.compose.runtime.MutableState
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.kunano.tasks_to_do.core.data.TaskRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class StatsViewModel @Inject constructor(): ViewModel() {
+class StatsViewModel @Inject constructor(private val taskRepository: TaskRepository): ViewModel() {
     private val _statsScreenState: MutableStateFlow<StatsScreenState> = MutableStateFlow(StatsScreenState())
 
     val statsScreenState: StateFlow<StatsScreenState> = _statsScreenState
@@ -17,8 +20,19 @@ class StatsViewModel @Inject constructor(): ViewModel() {
 
 
     init {
-        updatePendingTasks(0)
-        updateCompletedTasks(0)
+
+        viewModelScope.launch {
+            taskRepository.getPendingTask().collect{
+               updatePendingTasks(it)
+            }
+        }
+
+        viewModelScope.launch {
+            taskRepository.getCompletedTask().collect{
+                updateCompletedTasks(it)
+            }
+        }
+
     }
 
 
@@ -30,7 +44,7 @@ class StatsViewModel @Inject constructor(): ViewModel() {
 
     private fun updateCompletedTasks(completedTasks: Int){
         _statsScreenState.update { currentState ->
-            currentState.copy(pendingTask = completedTasks.toString())
+            currentState.copy(completedTask = completedTasks.toString())
         }
     }
 

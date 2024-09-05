@@ -6,29 +6,45 @@ import com.kunano.tasks_to_do.core.data.model.daos_interfaces.SubTaskDao
 import com.kunano.tasks_to_do.core.data.model.entities.LocalSubTaskEntity
 import com.kunano.tasks_to_do.core.data.source.LocalDataSource.Companion.getDataBaseInstance
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.withContext
 import java.util.concurrent.Future
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
 class SubTaskRepository @Inject constructor(@ApplicationContext val context: Context) {
-    val subTaskDao: SubTaskDao = getDataBaseInstance(context).SubTaskDao()
+    private val subTaskDao: SubTaskDao = getDataBaseInstance(context)!!.SubTaskDao()
 
 
-    fun insertSubTask(subTaskEntity: LocalSubTaskEntity){
-
+    suspend fun insertSubTask(subTaskEntity: LocalSubTaskEntity): Boolean{
+        return withContext(Dispatchers.IO){
+            subTaskDao.insertSubTask(subTaskEntity) > 0
+        }
     }
 
-    fun deleteSubTask(subTaskEntity: LocalSubTaskEntity){
-
+    suspend fun deleteSubTask(subTaskEntity: LocalSubTaskEntity){
+        withContext(Dispatchers.IO){
+            subTaskDao.deleteSubTask(subTaskEntity)
+        }
     }
 
-    fun updateSubTask(subTaskEntity: LocalSubTaskEntity){
+    suspend fun updateSubTask(subTaskEntity: LocalSubTaskEntity){
 
+        withContext(Dispatchers.IO){
+            subTaskDao.updateSubTask(subTaskEntity)
+        }
     }
 
-    fun getSubTaskLIst(taskId: String) {
+    suspend fun getSubTaskLIst(taskId: Long): List<LocalSubTaskEntity> {
+        return withContext(Dispatchers.IO){
+            subTaskDao.getAll(taskId = taskId)
+        }
+    }
 
+    fun getSubTaskLIstLive(taskId: Long): Flow<List<LocalSubTaskEntity>> {
+        return subTaskDao.getAllLive(taskId = taskId)
     }
 
 }
