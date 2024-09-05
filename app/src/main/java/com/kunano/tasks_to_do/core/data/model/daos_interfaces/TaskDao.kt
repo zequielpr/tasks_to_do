@@ -11,6 +11,12 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface TaskDao {
 
+
+    //get completed tasks
+    @Query("SELECT count(taskId) as quatity FROM task_table WHERE isCompleted in (:isCompleted)")
+    fun getTaskQuantityByState(isCompleted: Boolean): Flow<Int>
+
+
     //it has a sub query to obtain the quantity of subtasks within a task in realtime
     @Query("SELECT taskId, categoryIdFk, taskTitle, createDateTime," +
             " taskId, dueDate, isCompleted, (select count(subTaskId) from subTaskTable where taskIdFk = taskId) as subTaskQuantity, reminderTime, " +

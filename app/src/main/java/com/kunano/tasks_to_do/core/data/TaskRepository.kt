@@ -70,4 +70,12 @@ class TaskRepository @Inject constructor(
         }
     }
 
+    fun getCompletedTask(): Flow<Int>{
+        return _taskDao.getTaskQuantityByState(isCompleted = true)
+    }
+
+    fun getPendingTask(): Flow<Int>{
+        return _taskDao.getTaskQuantityByState(isCompleted = false)
+    }
+
 }
