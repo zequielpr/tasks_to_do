@@ -64,4 +64,7 @@
     <string name="manage_categories">Manage categories</string>
     <string name="create_task">Create task</string>
     <string name="create_category">Create category</string>
+    <string name="channel_name">task notification channel</string>
+    <string name="channel_description">channel for tasks notification</string>
+    <string name="expected_today_at">expected today at\n</string>
 </resources>

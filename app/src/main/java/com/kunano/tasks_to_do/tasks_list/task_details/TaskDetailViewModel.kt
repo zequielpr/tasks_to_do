@@ -1,5 +1,7 @@
 package com.kunano.tasks_to_do.tasks_list.task_details
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
@@ -19,6 +21,7 @@ import com.kunano.tasks_to_do.core.data.model.entities.LocalSubTaskEntity
 import com.kunano.tasks_to_do.core.data.model.entities.LocalTaskEntity
 import com.kunano.tasks_to_do.core.data.model.entities.Note
 import com.kunano.tasks_to_do.core.data.model.entities.Reminder
+import com.kunano.tasks_to_do.core.reminders_manager.ReminderManager
 import com.kunano.tasks_to_do.core.utils.Utils
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -36,7 +39,8 @@ class TaskDetailViewModel @Inject constructor(
     private val taskRepository: TaskRepository,
     private val categoryRepository: CategoryRepository,
     private val subTaskRepository: SubTaskRepository,
-    private val stringsResourceRepository: StringsResourceRepository
+    private val stringsResourceRepository: StringsResourceRepository,
+    private val reminderManager: ReminderManager
 ) : ViewModel() {
 
     val taskKey: Long = savedStateHandle.toRoute<Route.TaskDetails>().taskKey
@@ -298,6 +302,7 @@ class TaskDetailViewModel @Inject constructor(
 
     //Update subtask in the source of truth
 
+    @RequiresApi(Build.VERSION_CODES.S)
     fun setRemindAtDateTime(timePickerState: TimePickerState) {
 
         currentTask?.let {
@@ -314,6 +319,10 @@ class TaskDetailViewModel @Inject constructor(
                     )
                 )
 
+                // schedule reminder
+                reminderManager.setReminder(it.copy(reminder = it.reminder?.copy(
+                    reminderTime = reminderDateTime
+                )))
                 hideRemindAtTimePicker()
             }
         }

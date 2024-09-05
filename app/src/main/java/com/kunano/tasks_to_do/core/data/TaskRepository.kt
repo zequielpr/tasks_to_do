@@ -64,4 +64,10 @@ class TaskRepository @Inject constructor(
         }
     }
 
+    suspend fun markTaskAsDon(taskId: Long): Boolean{
+        return withContext(Dispatchers.IO){
+            _taskDao.markTaskAsDone(taskId) > 0
+        }
+    }
+
 }

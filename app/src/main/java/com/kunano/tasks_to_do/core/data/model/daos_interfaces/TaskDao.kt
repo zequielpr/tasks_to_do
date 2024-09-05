@@ -26,6 +26,9 @@ interface TaskDao {
     @Update
     suspend fun updateTask(taskEntity: LocalTaskEntity): Int
 
+    @Query("UPDATE task_table SET isCompleted = true WHERE taskId in (:taskId)")
+    suspend fun markTaskAsDone(taskId: Long): Int
+
     @Insert
     suspend fun insertTask(taskEntity: LocalTaskEntity): Long
 
