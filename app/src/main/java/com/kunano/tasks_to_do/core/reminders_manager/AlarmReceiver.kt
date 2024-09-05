@@ -84,13 +84,6 @@ class AlarmReceiver : BroadcastReceiver() {
                 notification = notification
             )
         }
-
-
-
-
-
-        Toast.makeText(context, "Alarm went off!. reminder of $taskName", Toast.LENGTH_SHORT)
-            .show();
     }
 
 }

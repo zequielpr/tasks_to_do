@@ -1,10 +1,12 @@
 
 
 import Route
+import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.kunano.tasks_to_do.R
 import kotlinx.serialization.Contextual
@@ -13,7 +15,7 @@ import kotlinx.serialization.Serializable
 @Serializable
 sealed class BottomNavBarRoutes(
     val route: String,
-    @Contextual val icon: ImageVector,
+    @DrawableRes val icon: Int,
     @StringRes val label: Int,
     val startDestination: Route
 ) {
@@ -22,7 +24,7 @@ sealed class BottomNavBarRoutes(
     @Serializable
     data object TasksList : BottomNavBarRoutes(
         "TasksList",
-        Icons.AutoMirrored.Filled.List,
+        R.drawable.list_icon,
         R.string.tasks_list,
         startDestination = Route.TasksListScreen
     )
@@ -31,7 +33,7 @@ sealed class BottomNavBarRoutes(
     @Serializable
     data object Stats : BottomNavBarRoutes(
         "Stats",
-        Icons.Default.AccountCircle,
+        R.drawable.stats_query,
         R.string.stats,
         startDestination = Route.StatsScreen
     )

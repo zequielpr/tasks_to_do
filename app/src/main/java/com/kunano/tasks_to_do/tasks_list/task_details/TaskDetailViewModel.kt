@@ -28,10 +28,11 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.time.LocalDateTime
 import java.time.format.FormatStyle
 import java.util.UUID
 import javax.inject.Inject
-
+@RequiresApi(Build.VERSION_CODES.S)
 @OptIn(ExperimentalMaterial3Api::class)
 @HiltViewModel
 class TaskDetailViewModel @Inject constructor(
@@ -146,7 +147,7 @@ class TaskDetailViewModel @Inject constructor(
         currentTask?.let {
             val newTask = taskRepository.insertAndGetTask(
                 it.copy(
-                    taskId = null, isCompleted = false
+                    taskId = null, isCompleted = false, reminder = null
                 )
             ) //A new id will be generate
 
@@ -301,7 +302,6 @@ class TaskDetailViewModel @Inject constructor(
 
 
     //Update subtask in the source of truth
-
     @RequiresApi(Build.VERSION_CODES.S)
     fun setRemindAtDateTime(timePickerState: TimePickerState) {
 
@@ -320,14 +320,31 @@ class TaskDetailViewModel @Inject constructor(
                 )
 
                 // schedule reminder
-                reminderManager.setReminder(it.copy(reminder = it.reminder?.copy(
-                    reminderTime = reminderDateTime
-                )))
+                setReminderAlarm(reminderDateTime)
                 hideRemindAtTimePicker()
             }
         }
 
 
+    }
+
+    private fun setReminderAlarm(localDateTime: LocalDateTime?){
+        currentTask?.let {
+            reminderManager.setReminder(it.copy(reminder = it.reminder?.copy(
+                reminderTime = localDateTime
+            )))
+        }
+    }
+
+
+    //When this method is invoked, the reminder of the current task is null
+    private fun setReminderAlarm(remindAtTime: LocalDateTime?, eventTime: LocalDateTime?){
+        currentTask?.let {
+            reminderManager.setReminder(it.copy(reminder = Reminder(
+                reminderTime = remindAtTime,
+                eventTime = eventTime
+            )))
+        }
     }
 
 
@@ -381,11 +398,16 @@ class TaskDetailViewModel @Inject constructor(
                                 ?.withMonth(dueDate.monthValue)?.withDayOfMonth(dueDate.dayOfMonth)
                         )
 
-                        taskRepository.updateTask(
+
+                        val isSuccessful = taskRepository.updateTask(
                             it.copy(
                                 reminder = newReminder, dueDate = dueDate
                             )
                         )
+
+                        if (isSuccessful){
+                            setReminderAlarm(newReminder.reminderTime, newReminder.eventTime)
+                        }
                     }
                 }
             }
@@ -395,16 +417,17 @@ class TaskDetailViewModel @Inject constructor(
     }
 
 
+
     fun setEventAndReminderDateTime(timePickerState: TimePickerState) {
         val hour = timePickerState.hour
         val minute = timePickerState.minute
-
-
 
         viewModelScope.launch {
             currentTask?.let {
                 var eventTime = it.dueDate.withHour(hour).withMinute(minute)
                 var remindAt = eventTime.minusMinutes(10)
+
+                setReminderAlarm(remindAt, eventTime)
 
                 taskRepository.updateTask(
 

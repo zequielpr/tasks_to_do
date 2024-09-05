@@ -55,6 +55,7 @@ import com.kunano.tasks_to_do.tasks_list.task_details.notes.NoteScreen
 import dagger.hilt.android.AndroidEntryPoint
 import dagger.hilt.android.HiltAndroidApp
 import android.net.Uri
+import androidx.compose.ui.res.painterResource
 
 val graphsRoutesList = listOf(BottomNavBarRoutes.TasksList, BottomNavBarRoutes.Stats)
 
@@ -208,10 +209,7 @@ fun bottomBar(navController: NavController, scrollBehavior: BottomAppBarScrollBe
         graphsRoutesList.forEach { screen ->
             NavigationBarItem(
                 icon = {
-                    Icon(
-                        screen.icon,
-                        contentDescription = null
-                    )
+                    Icon(painter = painterResource(id = screen.icon), contentDescription = screen.route)
                 },
                 label = { Text(stringResource(screen.label)) },
                 selected = currentDestination?.hierarchy?.any {
@@ -253,7 +251,6 @@ fun navigate(navController: NavController, route: Route) {
 fun navigateBack(navController: NavController) {
     navController.popBackStack()
 }
-
 
 
 @OptIn(ExperimentalMaterial3Api::class)
