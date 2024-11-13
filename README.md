@@ -5,10 +5,7 @@ A simple and intuitive task management app designed to help users create a to-do
 ## Table of Contents
 - [Features](#features)
 - [Installation](#installation)
-- [Usage](#usage)
 - [Technologies Used](#technologies-used)
-- [Contributing](#contributing)
-- [License](#license)
 
 ---
 
@@ -24,4 +21,17 @@ A simple and intuitive task management app designed to help users create a to-do
    git clone https://github.com/zequielpr/tasks_to_do
 
 2. Open the repository with Android Studio An execute the app
+
+
+
+## Technologies Used
+
+   •Kotlin
+   •Jetpack Compose
+   •Android Studio
+   •SQL
+   •Room Database
+   •GitHub
+   •Dependency injection with Hilt
+   •Model-View-ViewModel (MVVM)
   
