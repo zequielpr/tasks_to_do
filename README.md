@@ -10,10 +10,10 @@ A simple and intuitive task management app designed to help users create a to-do
 ---
 
 ## Features
-- **Task Creation**: Easily add new tasks with a title, description, due date, and priority.
+- **Task Creation**: Easily add new tasks with a title and due date.
 - **Reminders**: Set reminders for specific tasks to receive notifications before the due date.
 - **Task Status**: Mark tasks as "completed" or "incomplete."
-- **Filtering and Sorting**: Filter tasks by priority or due date and sort them for better organization.
+- **Filtering and Sorting**: Filter tasks by their due date and sort them for better organization.
 
 ## Installation
 
