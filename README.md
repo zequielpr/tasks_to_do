@@ -26,12 +26,12 @@ A simple and intuitive task management app designed to help users create a to-do
 
 ## Technologies Used
 
-   •Kotlin
-   •Jetpack Compose
-   •Android Studio
-   •SQL
-   •Room Database
-   •GitHub
-   •Dependency injection with Hilt
-   •Model-View-ViewModel (MVVM)
+- **Kotlin
+- **Jetpack Compose
+- **Android Studio
+- **SQL
+- **Room Database
+- **GitHub
+- **Dependency injection with Hilt
+- **Model-View-ViewModel (MVVM)
   
